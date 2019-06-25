@@ -111,28 +111,6 @@ pub fn lower_caes(c: usize) -> u8 {
     MAP_TO_LOWER[c]
 }
 
-pub fn hash_raw(raw: &[u8], case_sensitive: bool) -> u32 {
-    let mut hash: u32 = 0;
-    let seed: u32 = 0x9e3779b9;
-    let length = raw.len();
-    if case_sensitive {
-        for i in 0..(length as usize) {
-            hash ^= (raw[i] as u32)
-                .wrapping_add(seed)
-                .wrapping_add(hash << 6)
-                .wrapping_add(hash >> 2);
-        }
-    } else {
-        for i in 0..(length as usize) {
-            hash ^= (lower_caes(raw[i] as usize) as u32)
-                .wrapping_add(seed)
-                .wrapping_add(hash << 6)
-                .wrapping_add(hash >> 2);
-        }
-    }
-    hash
-}
-
 fn string_parse(
     name_raw: &[u8],
     start_pos: usize,

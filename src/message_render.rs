@@ -1,21 +1,21 @@
 use name::{
-    hash_raw, Name, COMPRESS_POINTER_MARK16, COMPRESS_POINTER_MARK8, MAP_TO_LOWER, MAX_LABEL_COUNT,
+    Name, COMPRESS_POINTER_MARK16, COMPRESS_POINTER_MARK8, MAX_LABEL_COUNT,
 };
 use util::{InputBuffer, OutputBuffer};
 
 const MAX_COMPRESS_POINTER: usize = 0x3fff;
+const HASH_SEED: u32 = 0x9e3779b9;
 
 #[derive(Clone, Copy)]
 struct OffSetItem {
-    hash: u32,
-    pos: u16,
     len: u8,
+    pos: u16,
+    hash: u32,
 }
 
 struct NameComparator<'a> {
     buffer: &'a OutputBuffer,
     hash: u32,
-    case_sensitive: bool,
 }
 
 struct NameRef<'a> {
@@ -44,8 +44,13 @@ impl<'a> NameRef<'a> {
         &self.name.raw_data()[offset..]
     }
 
-    fn hash(&self, case_sensitive: bool) -> u32 {
-        hash_raw(self.raw_data(), case_sensitive)
+    fn hash(&self) -> u32 {
+        self.raw_data().iter().fold(0, |hash, c| {
+            hash ^ ((*c as u32)
+                .wrapping_add(HASH_SEED)
+                .wrapping_add(hash << 6)
+                .wrapping_add(hash >> 2))
+        })
     }
 }
 
@@ -69,14 +74,8 @@ impl<'a> NameComparator<'a> {
             while name_label_len > 0 {
                 let ch1 = self.buffer.at(item_pos as usize);
                 let ch2 = name_buffer.read_u8().unwrap();
-                if self.case_sensitive {
-                    if ch1 != ch2 {
-                        return false;
-                    }
-                } else {
-                    if MAP_TO_LOWER[ch1 as usize] != MAP_TO_LOWER[ch2 as usize] {
-                        return false;
-                    }
+                if ch1 != ch2 {
+                    return false;
                 }
                 item_pos += 1;
                 name_label_len -= 1;
@@ -105,7 +104,6 @@ const MAX_MESSAGE_LEN: u32 = 512;
 pub struct MessageRender {
     buffer: OutputBuffer,
     truncated: bool,
-    case_sensitive: bool,
     table: Vec<Vec<OffSetItem>>,
     label_hashes: [u32; MAX_LABEL_COUNT as usize],
 }
@@ -115,7 +113,6 @@ impl MessageRender {
         let mut render = MessageRender {
             buffer: OutputBuffer::new(MAX_MESSAGE_LEN as usize),
             truncated: false,
-            case_sensitive: true,
             table: Vec::new(),
             label_hashes: [0; MAX_LABEL_COUNT as usize],
         };
@@ -141,7 +138,6 @@ impl MessageRender {
         let comparator = NameComparator {
             buffer: &self.buffer,
             hash: hash,
-            case_sensitive: self.case_sensitive,
         };
         for item in &self.table[bucket_id as usize] {
             if comparator.compare(&item, name_buffer) {
@@ -163,7 +159,6 @@ impl MessageRender {
     pub fn clear(&mut self) {
         self.buffer.clear();
         self.truncated = false;
-        self.case_sensitive = true;
         for i in 0..BUCKETS {
             self.table[i].clear()
         }
@@ -185,7 +180,7 @@ impl MessageRender {
                 break;
             }
 
-            self.label_hashes[label_uncompressed] = parent.hash(self.case_sensitive);
+            self.label_hashes[label_uncompressed] = parent.hash();
             if compress {
                 offset = self.find_offset(
                     &mut InputBuffer::new(parent.raw_data()),
@@ -335,7 +330,6 @@ mod test {
             from_hex("e3808583000100000001000001320131033136380331393207696e2d61646472046172706100000c0001033136380331393207494e2d4144445204415250410000060001000151800017c02a00000000000000708000001c2000093a8000015180").unwrap();
         render.clear();
         let msg = Message::from_wire(raw.as_slice()).unwrap();
-        render.case_sensitive = true;
         msg.rend(&mut render);
         assert_eq!(raw.as_slice(), render.data());
     }
