@@ -10,11 +10,11 @@ pub struct NS {
 
 impl NS {
     pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self, Error> {
-        Name::from_wire(buf, false).map(|name| NS { name: name })
+        Name::from_wire(buf).map(|name| NS { name: name })
     }
 
     pub fn from_string(name_str: &str) -> Result<Self, Error> {
-        let name = Name::new(name_str, false)?;
+        let name = Name::new(name_str)?;
         Ok(NS { name: name })
     }
 
@@ -41,7 +41,7 @@ mod test {
         let raw = from_hex("0474657374076578616d706c6503636f6d00").unwrap();
         let mut buf = InputBuffer::new(raw.as_slice());
         let ns = NS::from_wire(&mut buf, raw.len() as u16).unwrap();
-        assert_eq!(&ns.name, &Name::new("test.example.com", false).unwrap());
+        assert_eq!(&ns.name, &Name::new("test.example.com").unwrap());
 
         let mut render = MessageRender::new();
         ns.rend(&mut render);

@@ -10,7 +10,7 @@ pub struct PTR {
 
 impl PTR {
     pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self, Error> {
-        Name::from_wire(buf, false).map(|name| PTR { name: name })
+        Name::from_wire(buf).map(|name| PTR { name: name })
     }
 
     pub fn rend(&self, render: &mut MessageRender) {

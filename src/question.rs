@@ -14,7 +14,7 @@ pub struct Question {
 
 impl Question {
     pub fn from_wire(buf: &mut InputBuffer) -> Result<Self, Error> {
-        let name = Name::from_wire(buf, false)?;
+        let name = Name::from_wire(buf)?;
         let typ = RRType::from_wire(buf)?;
         let class = RRClass::from_wire(buf)?;
         Ok(Question {
@@ -57,7 +57,7 @@ mod test {
         let mut buf = InputBuffer::new(raw.as_slice());
         let q = Question::from_wire(&mut buf).unwrap();
         let desired_q = Question {
-            name: Name::new("foo.example.com.", false).unwrap(),
+            name: Name::new("foo.example.com.").unwrap(),
             typ: RRType::NS,
             class: RRClass::IN,
         };

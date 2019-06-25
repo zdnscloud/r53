@@ -49,7 +49,7 @@ fn main() {
     socket.set_read_timeout(Some(std::time::Duration::from_secs(3))).unwrap();
 
     let name = matches.value_of("qname").unwrap();
-    let name = Name::new(name, true).unwrap();
+    let name = Name::new(name).unwrap();
 
     let qtype = match matches.value_of("qtype") {
         Some(t) => t.as_ref(),

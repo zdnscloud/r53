@@ -18,7 +18,7 @@ impl NAPTR {
         let preference = buf.read_u16()?;
         let flags = buf.read_u16()?;
         let services = buf.read_u16()?;
-        let replacement = Name::from_wire(buf, false)?;
+        let replacement = Name::from_wire(buf)?;
         Ok(NAPTR {
             order: order,
             preference: preference,

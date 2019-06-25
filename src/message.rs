@@ -208,7 +208,7 @@ mod test {
 
     fn build_desired_message() -> Message {
         let mut msg =
-            Message::with_query(Name::new("test.example.com.", false).unwrap(), RRType::A);
+            Message::with_query(Name::new("test.example.com.").unwrap(), RRType::A);
         {
             let mut builder = MessageBuilder::new(&mut msg);
             builder
@@ -219,7 +219,7 @@ mod test {
                 .set_flag(HeaderFlag::AuthAnswer)
                 .set_flag(HeaderFlag::RecursionDesired)
                 .add_answer(RRset {
-                    name: Name::new("test.example.com.", false).unwrap(),
+                    name: Name::new("test.example.com.").unwrap(),
                     typ: RRType::A,
                     class: RRClass::IN,
                     ttl: RRTtl(3600),
@@ -229,7 +229,7 @@ mod test {
                     ]
                         .to_vec(),
                 }).add_auth(RRset {
-                    name: Name::new("example.com.", false).unwrap(),
+                    name: Name::new("example.com.").unwrap(),
                     typ: RRType::NS,
                     class: RRClass::IN,
                     ttl: RRTtl(3600),
@@ -238,7 +238,7 @@ mod test {
                     ))]
                         .to_vec(),
                 }).add_additional(RRset {
-                    name: Name::new("ns1.example.com.", false).unwrap(),
+                    name: Name::new("ns1.example.com.").unwrap(),
                     typ: RRType::A,
                     class: RRClass::IN,
                     ttl: RRTtl(3600),

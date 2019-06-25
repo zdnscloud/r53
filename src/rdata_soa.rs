@@ -16,8 +16,8 @@ pub struct SOA {
 
 impl SOA {
     pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self, Error> {
-        let mname = Name::from_wire(buf, false)?;
-        let rname = Name::from_wire(buf, false)?;
+        let mname = Name::from_wire(buf)?;
+        let rname = Name::from_wire(buf)?;
         let serial = buf.read_u32()?;
         let refresh = buf.read_u32()?;
         let retry = buf.read_u32()?;

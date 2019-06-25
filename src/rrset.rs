@@ -39,7 +39,7 @@ pub struct RRset {
 
 impl RRset {
     pub fn from_wire(buf: &mut InputBuffer) -> Result<Self, Error> {
-        let name = Name::from_wire(buf, false)?;
+        let name = Name::from_wire(buf)?;
         let typ = RRType::from_wire(buf)?;
         let class = RRClass::from_wire(buf)?;
         let ttl = RRTtl::from_wire(buf)?;
@@ -142,7 +142,7 @@ mod test {
         let mut buf = InputBuffer::new(raw.as_slice());
         let rrset = RRset::from_wire(&mut buf).unwrap();
         let desired_rrset = RRset {
-            name: Name::new("test.example.com.", false).unwrap(),
+            name: Name::new("test.example.com.").unwrap(),
             typ: RRType::A,
             class: RRClass::IN,
             ttl: RRTtl(3600),

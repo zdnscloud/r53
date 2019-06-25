@@ -12,7 +12,7 @@ pub struct MX {
 impl MX {
     pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self, Error> {
         let preference = buf.read_u16()?;
-        let name = Name::from_wire(buf, false)?;
+        let name = Name::from_wire(buf)?;
         Ok(MX {
             preference: preference,
             name: name,

@@ -10,11 +10,11 @@ pub struct DName {
 
 impl DName {
     pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self, Error> {
-        Name::from_wire(buf, false).map(|name| DName { target: name })
+        Name::from_wire(buf).map(|name| DName { target: name })
     }
 
     pub fn from_string(name_str: &str) -> Result<Self, Error> {
-        let name = Name::new(name_str, false)?;
+        let name = Name::new(name_str)?;
         Ok(DName { target: name })
     }
 

@@ -10,7 +10,7 @@ pub struct CName {
 
 impl CName {
     pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self, Error> {
-        Name::from_wire(buf, false).map(|name| CName { name: name })
+        Name::from_wire(buf).map(|name| CName { name: name })
     }
 
     pub fn rend(&self, render: &mut MessageRender) {

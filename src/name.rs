@@ -3,6 +3,7 @@ use message_render::MessageRender;
 use std::cmp;
 use std::fmt;
 use util::{InputBuffer, OutputBuffer};
+use std::hash::{Hash, Hasher};
 
 #[derive(Eq, PartialEq, Debug)]
 pub enum NameRelation {
@@ -135,8 +136,7 @@ pub fn hash_raw(raw: &[u8], case_sensitive: bool) -> u32 {
 fn string_parse(
     name_raw: &[u8],
     start_pos: usize,
-    end: usize,
-    downcase: bool,
+    end: usize
 ) -> Result<(Vec<u8>, Vec<u8>)> {
     let mut start = start_pos;
     let mut data: Vec<u8> = Vec::with_capacity(end - start + 1);
@@ -203,11 +203,7 @@ fn string_parse(
                 if count > MAX_LABEL_LEN {
                     return Err(ErrorKind::TooLongLabel.into());
                 }
-                if downcase {
-                    data.push(lower_caes(c as usize));
-                } else {
-                    data.push(c as u8);
-                }
+                data.push(c as u8);
             }
             next_u8 = true;
         } else if state == FtStat::Initialescape {
@@ -222,11 +218,7 @@ fn string_parse(
                 if count > MAX_LABEL_LEN {
                     return Err(ErrorKind::TooLongLabel.into());
                 }
-                if downcase {
-                    data.push(lower_caes(c as usize));
-                } else {
-                    data.push(c as u8);
-                }
+                data.push(c as u8);
                 state = FtStat::Ordinary;
                 break;
             }
@@ -249,11 +241,7 @@ fn string_parse(
                 if count > MAX_LABEL_LEN {
                     return Err(ErrorKind::TooLongLabel.into());
                 }
-                if downcase {
-                    data.push(lower_caes(c as usize));
-                } else {
-                    data.push(c as u8);
-                }
+                data.push(c as u8);
                 state = FtStat::Ordinary;
             }
             next_u8 = true;
@@ -281,9 +269,9 @@ fn string_parse(
 }
 
 impl Name {
-    pub fn new(name: &str, downcase: bool) -> Result<Name> {
+    pub fn new(name: &str) -> Result<Name> {
         let name_len = name.len();
-        match string_parse(name.as_bytes(), 0, name_len, downcase) {
+        match string_parse(name.as_bytes(), 0, name_len) {
             Ok((data, offsets)) => Ok(Name {
                 length: data.len() as u8,
                 label_count: offsets.len() as u8,
@@ -294,7 +282,7 @@ impl Name {
         }
     }
 
-    pub fn from_wire(buf: &mut InputBuffer, downcase: bool) -> Result<Self> {
+    pub fn from_wire(buf: &mut InputBuffer) -> Result<Self> {
         let mut n: usize = 0;
         let mut nused: usize = 0;
         let mut cused: usize = 0;
@@ -309,7 +297,7 @@ impl Name {
         let mut new_current: usize = 0;
 
         while current < buf.len() && done == false {
-            let mut c = try!(buf.read_u8());
+            let c = try!(buf.read_u8());
             current += 1;
             if seen_pointer == false {
                 cused += 1;
@@ -337,9 +325,6 @@ impl Name {
                     return Err(ErrorKind::InvalidLabelCharacter.into());
                 }
             } else if state == FwStat::Ordinary {
-                if downcase {
-                    c = MAP_TO_LOWER[c as usize];
-                }
                 data.push(c);
                 n -= 1;
                 if n == 0 {
@@ -432,7 +417,7 @@ impl Name {
         unsafe { String::from_utf8_unchecked(buf) }
     }
 
-    pub fn get_relation(&self, other: &Name, case_sensitive: bool) -> NameComparisonResult {
+    pub fn get_relation(&self, other: &Name) -> NameComparisonResult {
         let mut l1 = self.label_count;
         let mut l2 = other.label_count;
         let ldiff = (l1 as i8) - (l2 as i8);
@@ -456,12 +441,7 @@ impl Name {
             while mincount > 0 {
                 let label1 = self.raw[ps1 as usize];
                 let label2 = other.raw[ps2 as usize];
-                let chdiff = if case_sensitive {
-                    (label1 as i8) - (label2 as i8)
-                } else {
-                    (lower_caes(label1 as usize) as i8) - (lower_caes(label2 as usize) as i8)
-                };
-
+                let chdiff = (lower_caes(label1 as usize) as i8) - (lower_caes(label2 as usize) as i8);
                 if chdiff != 0 {
                     if nlabels < 2 {
                         return NameComparisonResult {
@@ -759,10 +739,6 @@ impl Name {
         self
     }
 
-    pub fn hash(&self, case_sensitive: bool) -> u32 {
-        hash_raw(self.raw.as_slice(), case_sensitive)
-    }
-
     pub fn is_subdomain(&self, parent: &Name) -> bool {
         if self.length < parent.length || self.label_count < parent.label_count {
             return false;
@@ -839,7 +815,7 @@ impl cmp::PartialOrd for Name {
 
 impl cmp::Ord for Name {
     fn cmp(&self, other: &Name) -> cmp::Ordering {
-        let relation = self.get_relation(other, false);
+        let relation = self.get_relation(other);
         if relation.order < 0 {
             cmp::Ordering::Less
         } else if relation.order > 0 {
@@ -850,24 +826,32 @@ impl cmp::Ord for Name {
     }
 }
 
+impl Hash for Name {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        for c in self.raw.as_slice() {
+            state.write_u8(lower_caes(*c as usize));
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
     fn test_name_concat() {
-        let www_knet_cn = Name::new("www.knet.Cn", true).unwrap();
-        let www_knet = Name::new("www.knet", true).unwrap();
-        let cn = Name::new("cn", true).unwrap();
+        let www_knet_cn = Name::new("www.knet.Cn").unwrap();
+        let www_knet = Name::new("www.knet").unwrap();
+        let cn = Name::new("cn").unwrap();
 
-        let relation = www_knet_cn.get_relation(&www_knet.concat(&cn).unwrap(), false);
+        let relation = www_knet_cn.get_relation(&www_knet.concat(&cn).unwrap());
         assert_eq!(relation.order, 0);
         assert_eq!(relation.common_label_count, 4);
         assert_eq!(relation.relation, NameRelation::Equal);
 
         assert_eq!(
             www_knet_cn.reverse().to_string(),
-            "cn.knet.www.".to_string()
+            "Cn.knet.www.".to_string()
         );
 
         assert_eq!(
@@ -876,28 +860,28 @@ mod test {
         );
         assert_eq!(
             www_knet_cn.split(0, 4).unwrap().to_string(),
-            "www.knet.cn.".to_string()
+            "www.knet.Cn.".to_string()
         );
         assert_eq!(
             www_knet_cn.split(1, 3).unwrap().to_string(),
-            "knet.cn.".to_string()
+            "knet.Cn.".to_string()
         );
         assert_eq!(
             www_knet_cn.split(1, 2).unwrap().to_string(),
-            "knet.cn.".to_string()
+            "knet.Cn.".to_string()
         );
 
         assert_eq!(
             www_knet_cn.parent(0).unwrap().to_string(),
-            "www.knet.cn.".to_string()
+            "www.knet.Cn.".to_string()
         );
         assert_eq!(
             www_knet_cn.parent(1).unwrap().to_string(),
-            "knet.cn.".to_string()
+            "knet.Cn.".to_string()
         );
         assert_eq!(
             www_knet_cn.parent(2).unwrap().to_string(),
-            "cn.".to_string()
+            "Cn.".to_string()
         );
         assert_eq!(www_knet_cn.parent(3).unwrap().to_string(), ".".to_string());
         assert!(www_knet_cn.parent(4).is_err())
@@ -905,27 +889,22 @@ mod test {
 
     #[test]
     fn test_name_compare() {
-        let www_knet_cn_mix_case = Name::new("www.KNET.cN", false).unwrap();
-        let www_knet_cn = Name::new("www.knet.cn.", true).unwrap();
-        let relation = www_knet_cn.get_relation(&www_knet_cn_mix_case, false);
+        let www_knet_cn_mix_case = Name::new("www.KNET.cN").unwrap();
+        let www_knet_cn = Name::new("www.knet.cn.").unwrap();
+        let relation = www_knet_cn.get_relation(&www_knet_cn_mix_case);
         assert_eq!(relation.order, 0);
         assert_eq!(relation.common_label_count, 4);
         assert_eq!(relation.relation, NameRelation::Equal);
 
-        let relation = www_knet_cn.get_relation(&www_knet_cn_mix_case, true);
-        assert!(relation.order > 0);
-        assert_eq!(relation.common_label_count, 1);
-        assert_eq!(relation.relation, NameRelation::None);
-
-        let www_knet_com = Name::new("www.knet.com", true).unwrap();
-        let relation = www_knet_cn.get_relation(&www_knet_com, false);
+        let www_knet_com = Name::new("www.knet.com").unwrap();
+        let relation = www_knet_cn.get_relation(&www_knet_com);
         assert!(relation.order < 0);
         assert_eq!(relation.common_label_count, 1);
         assert_eq!(relation.relation, NameRelation::None);
 
-        let baidu_com = Name::new("baidu.com.", true).unwrap();
-        let www_baidu_com = Name::new("www.baidu.com", true).unwrap();
-        let relation = baidu_com.get_relation(&www_baidu_com, false);
+        let baidu_com = Name::new("baidu.com.").unwrap();
+        let www_baidu_com = Name::new("www.baidu.com").unwrap();
+        let relation = baidu_com.get_relation(&www_baidu_com);
         assert!(relation.order < 0);
         assert_eq!(relation.common_label_count, 3);
         assert_eq!(relation.relation, NameRelation::SuperDomain);
@@ -933,14 +912,14 @@ mod test {
 
     #[test]
     fn test_name_strip() {
-        let www_knet_cn_mix_case = Name::new("www.KNET.cN", true).unwrap();
+        let www_knet_cn_mix_case = Name::new("www.KNET.cN").unwrap();
         assert_eq!(
             &www_knet_cn_mix_case.strip_left(1).to_string(),
-            "knet.cn."
+            "KNET.cN."
         );
         assert_eq!(
             &www_knet_cn_mix_case.strip_left(2).to_string(),
-            "cn."
+            "cN."
         );
         assert_eq!(
             &www_knet_cn_mix_case.strip_left(3).to_string(),
@@ -948,7 +927,7 @@ mod test {
         );
         assert_eq!(
             &www_knet_cn_mix_case.strip_right(1).to_string(),
-            "www.knet."
+            "www.KNET."
         );
         assert_eq!(
             &www_knet_cn_mix_case.strip_right(2).to_string(),
@@ -960,7 +939,7 @@ mod test {
         );
 
         let mut name = www_knet_cn_mix_case.clone();
-        let ancestors = ["knet.cn.", "cn.", "."];
+        let ancestors = ["KNET.cN.", "cN.", "."];
         for i in 0..3 {
             name = name.to_ancestor(1);
             assert_eq!(
@@ -970,7 +949,7 @@ mod test {
         }
 
         let mut name = www_knet_cn_mix_case.clone();
-        let children = ["www.knet.", "www.", "."];
+        let children = ["www.KNET.", "www.", "."];
         for i in 0..3 {
             name = name.to_child(1);
             assert_eq!(
@@ -980,22 +959,29 @@ mod test {
         }
     }
 
+    fn hash_helper(name: &Name) -> u64 {
+        use std::collections::hash_map::DefaultHasher;
+        let mut hasher = DefaultHasher::new();
+        name.hash(&mut hasher);
+        hasher.finish()
+    }
+
     #[test]
     fn test_name_hash() {
-        let name1 = Name::new("wwwnnnnnnnnnnnnn.KNET.cNNNNNNNNN", false).unwrap();
-        let name2 = Name::new("wwwnnnnnnnnnnnnn.KNET.cNNNNNNNNn", false).unwrap();
-        let name3 = Name::new("wwwnnnnnnnnnnnnn.KNET.cNNNNNNNNN.baidu.com.cn.net", false).unwrap();
-        assert_eq!(&name1.hash(false), &name2.hash(false));
-        assert_ne!(&name1.hash(false), &name3.hash(false));
+        let name1 = Name::new("wwwnnnnnnnnnnnnn.KNET.cNNNNNNNNN").unwrap();
+        let name2 = Name::new("wwwnnnnnnnnnnnnn.KNET.cNNNNNNNNn").unwrap();
+        let name3 = Name::new("wwwnnnnnnnnnnnnn.KNET.cNNNNNNNNN.baidu.com.cn.net").unwrap();
+        assert_eq!(hash_helper(&name1), hash_helper(&name2));
+        assert_ne!(hash_helper(&name1), hash_helper(&name3));
     }
 
     #[test]
     fn test_name_is_subdomain() {
-        let www_knet_cn = Name::new("www.knet.Cn", false).unwrap();
-        let www_knet = Name::new("www.knet", false).unwrap();
-        let knet_cn = Name::new("knet.Cn", false).unwrap();
-        let cn = Name::new("cn", false).unwrap();
-        let knet = Name::new("kNet", false).unwrap();
+        let www_knet_cn = Name::new("www.knet.Cn").unwrap();
+        let www_knet = Name::new("www.knet").unwrap();
+        let knet_cn = Name::new("knet.Cn").unwrap();
+        let cn = Name::new("cn").unwrap();
+        let knet = Name::new("kNet").unwrap();
         let root = root();
         assert!(
             www_knet_cn.is_subdomain(&knet_cn)
