@@ -42,7 +42,7 @@ impl Question {
             self.class.to_string(),
             self.typ.to_string(),
         ]
-            .join(" ")
+        .join(" ")
     }
 }
 

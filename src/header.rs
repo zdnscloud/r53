@@ -97,7 +97,8 @@ impl Header {
             self.opcode.to_string(),
             self.rcode.to_string(),
             self.id
-        ).unwrap();
+        )
+        .unwrap();
         write!(&mut header_str, ";; flags: ").unwrap();
         for flag in self.setted_flags() {
             write!(&mut header_str, " {}", flag.to_string()).unwrap();

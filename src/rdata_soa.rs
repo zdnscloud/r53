@@ -64,7 +64,7 @@ impl SOA {
             self.expire.to_string(),
             self.minimum.to_string(),
         ]
-            .join(" ")
+        .join(" ")
     }
 }
 

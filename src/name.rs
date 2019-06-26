@@ -2,8 +2,8 @@ use error::*;
 use message_render::MessageRender;
 use std::cmp;
 use std::fmt;
-use util::{InputBuffer, OutputBuffer};
 use std::hash::{Hash, Hasher};
+use util::{InputBuffer, OutputBuffer};
 
 #[derive(Eq, PartialEq, Debug)]
 pub enum NameRelation {
@@ -111,11 +111,7 @@ pub fn lower_caes(c: usize) -> u8 {
     MAP_TO_LOWER[c]
 }
 
-fn string_parse(
-    name_raw: &[u8],
-    start_pos: usize,
-    end: usize
-) -> Result<(Vec<u8>, Vec<u8>)> {
+fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8>, Vec<u8>)> {
     let mut start = start_pos;
     let mut data: Vec<u8> = Vec::with_capacity(end - start + 1);
     let mut offsets: Vec<u8> = Vec::new();
@@ -419,7 +415,8 @@ impl Name {
             while mincount > 0 {
                 let label1 = self.raw[ps1 as usize];
                 let label2 = other.raw[ps2 as usize];
-                let chdiff = (lower_caes(label1 as usize) as i8) - (lower_caes(label2 as usize) as i8);
+                let chdiff =
+                    (lower_caes(label1 as usize) as i8) - (lower_caes(label2 as usize) as i8);
                 if chdiff != 0 {
                     if nlabels < 2 {
                         return NameComparisonResult {
@@ -665,7 +662,6 @@ impl Name {
         self
     }
 
-
     pub fn clone(&self) -> Name {
         return Name {
             length: self.length,
@@ -709,9 +705,9 @@ impl Name {
         let new_label_count = self.label_count as usize - label_count;
         let end_label = new_label_count - 1;
         let end_pos = self.offsets[end_label] as usize;
-        self.raw.split_off(end_pos+1);
+        self.raw.split_off(end_pos + 1);
         self.raw[end_pos] = 0;
-        self.offsets.split_off(new_label_count+1);
+        self.offsets.split_off(new_label_count + 1);
         self.length = (end_pos + 1) as u8;
         self.label_count = new_label_count as u8;
         self
@@ -891,49 +887,28 @@ mod test {
     #[test]
     fn test_name_strip() {
         let www_knet_cn_mix_case = Name::new("www.KNET.cN").unwrap();
-        assert_eq!(
-            &www_knet_cn_mix_case.strip_left(1).to_string(),
-            "KNET.cN."
-        );
-        assert_eq!(
-            &www_knet_cn_mix_case.strip_left(2).to_string(),
-            "cN."
-        );
-        assert_eq!(
-            &www_knet_cn_mix_case.strip_left(3).to_string(),
-            "."
-        );
+        assert_eq!(&www_knet_cn_mix_case.strip_left(1).to_string(), "KNET.cN.");
+        assert_eq!(&www_knet_cn_mix_case.strip_left(2).to_string(), "cN.");
+        assert_eq!(&www_knet_cn_mix_case.strip_left(3).to_string(), ".");
         assert_eq!(
             &www_knet_cn_mix_case.strip_right(1).to_string(),
             "www.KNET."
         );
-        assert_eq!(
-            &www_knet_cn_mix_case.strip_right(2).to_string(),
-            "www."
-        );
-        assert_eq!(
-            &www_knet_cn_mix_case.strip_right(3).to_string(),
-            "."
-        );
+        assert_eq!(&www_knet_cn_mix_case.strip_right(2).to_string(), "www.");
+        assert_eq!(&www_knet_cn_mix_case.strip_right(3).to_string(), ".");
 
         let mut name = www_knet_cn_mix_case.clone();
         let ancestors = ["KNET.cN.", "cN.", "."];
         for i in 0..3 {
             name = name.to_ancestor(1);
-            assert_eq!(
-                name.to_string(),
-                ancestors[i]
-            );
+            assert_eq!(name.to_string(), ancestors[i]);
         }
 
         let mut name = www_knet_cn_mix_case.clone();
         let children = ["www.KNET.", "www.", "."];
         for i in 0..3 {
             name = name.to_child(1);
-            assert_eq!(
-                name.to_string(),
-                children[i]
-            );
+            assert_eq!(name.to_string(), children[i]);
         }
     }
 

@@ -161,14 +161,16 @@ impl Message {
             message_str,
             ";; QUESTION SECTION:\n{}\n",
             self.question.to_string()
-        ).unwrap();
+        )
+        .unwrap();
 
         if self.header.an_count > 0 {
             write!(
                 message_str,
                 "\n;; ANSWER SECTION:\n{}",
                 self.sections[0].to_string()
-            ).unwrap();
+            )
+            .unwrap();
         }
 
         if self.header.ns_count > 0 {
@@ -176,7 +178,8 @@ impl Message {
                 message_str,
                 "\n;; AUTHORITY SECTION:\n{}",
                 self.sections[1].to_string()
-            ).unwrap();
+            )
+            .unwrap();
         }
 
         if self.header.ar_count > 0 {
@@ -184,7 +187,8 @@ impl Message {
                 message_str,
                 "\n;; ADDITIONAL SECTION:\n{}",
                 self.sections[2].to_string()
-            ).unwrap();
+            )
+            .unwrap();
         }
         message_str
     }
@@ -207,8 +211,7 @@ mod test {
     use util::hex::from_hex;
 
     fn build_desired_message() -> Message {
-        let mut msg =
-            Message::with_query(Name::new("test.example.com.").unwrap(), RRType::A);
+        let mut msg = Message::with_query(Name::new("test.example.com.").unwrap(), RRType::A);
         {
             let mut builder = MessageBuilder::new(&mut msg);
             builder
@@ -227,8 +230,9 @@ mod test {
                         RData::A(A::from_string("192.0.2.2").unwrap()),
                         RData::A(A::from_string("192.0.2.1").unwrap()),
                     ]
-                        .to_vec(),
-                }).add_auth(RRset {
+                    .to_vec(),
+                })
+                .add_auth(RRset {
                     name: Name::new("example.com.").unwrap(),
                     typ: RRType::NS,
                     class: RRClass::IN,
@@ -236,20 +240,23 @@ mod test {
                     rdatas: [RData::NS(Box::new(
                         NS::from_string("ns1.example.com.").unwrap(),
                     ))]
-                        .to_vec(),
-                }).add_additional(RRset {
+                    .to_vec(),
+                })
+                .add_additional(RRset {
                     name: Name::new("ns1.example.com.").unwrap(),
                     typ: RRType::A,
                     class: RRClass::IN,
                     ttl: RRTtl(3600),
                     rdatas: [RData::A(A::from_string("2.2.2.2").unwrap())].to_vec(),
-                }).edns(Edns {
+                })
+                .edns(Edns {
                     versoin: 0,
                     extened_rcode: 0,
                     udp_size: 4096,
                     dnssec_aware: false,
                     options: None,
-                }).done();
+                })
+                .done();
         }
         msg
     }

@@ -117,7 +117,7 @@ impl RRset {
             self.class.to_string(),
             self.typ.to_string(),
         ]
-            .join("\t")
+        .join("\t")
     }
 
     pub fn rr_count(&self) -> usize {

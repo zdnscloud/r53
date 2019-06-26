@@ -1,6 +1,4 @@
-use name::{
-    Name, COMPRESS_POINTER_MARK16, COMPRESS_POINTER_MARK8, MAX_LABEL_COUNT,
-};
+use name::{Name, COMPRESS_POINTER_MARK16, COMPRESS_POINTER_MARK8, MAX_LABEL_COUNT};
 use util::{InputBuffer, OutputBuffer};
 
 const MAX_COMPRESS_POINTER: usize = 0x3fff;

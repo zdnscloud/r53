@@ -52,7 +52,7 @@ impl NAPTR {
             self.services.to_string(),
             self.replacement.to_string(),
         ]
-            .join(" ")
+        .join(" ")
     }
 }
 
