@@ -1,17 +1,18 @@
-use error::*;
-use message_render::MessageRender;
-use rdata_a;
-use rdata_aaaa;
-use rdata_cname;
-use rdata_dname;
-use rdata_mx;
-use rdata_naptr;
-use rdata_ns;
-use rdata_opt;
-use rdata_ptr;
-use rdata_soa;
-use rr_type::RRType;
-use util::{InputBuffer, OutputBuffer};
+use crate::error::DNSError;
+use crate::message_render::MessageRender;
+use crate::rdata_a;
+use crate::rdata_aaaa;
+use crate::rdata_cname;
+use crate::rdata_dname;
+use crate::rdata_mx;
+use crate::rdata_naptr;
+use crate::rdata_ns;
+use crate::rdata_opt;
+use crate::rdata_ptr;
+use crate::rdata_soa;
+use crate::rr_type::RRType;
+use crate::util::{InputBuffer, OutputBuffer};
+use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum RData {
@@ -47,11 +48,11 @@ impl RData {
                 rdata_dname::DName::from_wire(buf, len).map(|dname| RData::DNAME(Box::new(dname)))
             }
             RRType::OPT => rdata_opt::OPT::from_wire(buf, len).map(|opt| RData::OPT(Box::new(opt))),
-            _ => Err(ErrorKind::UnknownRRType.into()),
+            _ => Err(DNSError::UnknownRRType(typ.to_u16()).into()),
         };
 
         if rdata.is_ok() && buf.position() - pos != (len as usize) {
-            Err(ErrorKind::RdataLenIsNotCorrect.into())
+            Err(DNSError::RdataLenIsNotCorrect.into())
         } else {
             rdata
         }

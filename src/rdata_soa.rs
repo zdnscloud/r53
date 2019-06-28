@@ -1,7 +1,7 @@
-use error::Error;
-use message_render::MessageRender;
-use name::Name;
-use util::{InputBuffer, OutputBuffer};
+use crate::message_render::MessageRender;
+use crate::name::Name;
+use crate::util::{InputBuffer, OutputBuffer};
+use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SOA {
@@ -15,7 +15,7 @@ pub struct SOA {
 }
 
 impl SOA {
-    pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self, Error> {
+    pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self> {
         let mname = Name::from_wire(buf)?;
         let rname = Name::from_wire(buf)?;
         let serial = buf.read_u32()?;
@@ -71,7 +71,7 @@ impl SOA {
 #[cfg(test)]
 mod test {
     use super::*;
-    use util::hex::from_hex;
+    use crate::util::hex::from_hex;
 
     #[test]
     fn test_soa_to_wire() {

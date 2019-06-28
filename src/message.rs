@@ -1,15 +1,16 @@
-use edns::Edns;
-use error::*;
-use header::Header;
-use header_flag::HeaderFlag;
-use message_render::MessageRender;
-use name::Name;
-use question::Question;
-use rr_class::RRClass;
-use rr_type::RRType;
-use rrset::RRset;
+use crate::edns::Edns;
+use crate::error::DNSError;
+use crate::header::Header;
+use crate::header_flag::HeaderFlag;
+use crate::message_render::MessageRender;
+use crate::name::Name;
+use crate::question::Question;
+use crate::rr_class::RRClass;
+use crate::rr_type::RRType;
+use crate::rrset::RRset;
+use crate::util::{InputBuffer, OutputBuffer};
+use failure::Result;
 use std::fmt::Write;
-use util::{InputBuffer, OutputBuffer};
 
 #[derive(Copy, Clone)]
 pub enum SectionType {
@@ -100,7 +101,7 @@ impl Message {
         let ref mut buf = InputBuffer::new(raw);
         let header = Header::from_wire(buf)?;
         if header.qd_count != 1 {
-            return Err(ErrorKind::ShortOfQuestion.into());
+            return Err(DNSError::ShortOfQuestion.into());
         }
 
         let question = Question::from_wire(buf)?;
@@ -196,19 +197,19 @@ impl Message {
 
 #[cfg(test)]
 mod test {
-    use super::super::header_flag::HeaderFlag;
-    use super::super::message_builder::MessageBuilder;
-    use super::super::name::Name;
-    use super::super::opcode::Opcode;
-    use super::super::rcode::Rcode;
-    use super::super::rdata::RData;
-    use super::super::rdata_a::A;
-    use super::super::rdata_ns::NS;
-    use super::super::rr_class::RRClass;
-    use super::super::rr_type::RRType;
-    use super::super::rrset::RRTtl;
     use super::*;
-    use util::hex::from_hex;
+    use crate::header_flag::HeaderFlag;
+    use crate::message_builder::MessageBuilder;
+    use crate::name::Name;
+    use crate::opcode::Opcode;
+    use crate::rcode::Rcode;
+    use crate::rdata::RData;
+    use crate::rdata_a::A;
+    use crate::rdata_ns::NS;
+    use crate::rr_class::RRClass;
+    use crate::rr_type::RRType;
+    use crate::rrset::RRTtl;
+    use crate::util::hex::from_hex;
 
     fn build_desired_message() -> Message {
         let mut msg = Message::with_query(Name::new("test.example.com.").unwrap(), RRType::A);

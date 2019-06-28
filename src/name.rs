@@ -1,9 +1,10 @@
-use error::*;
-use message_render::MessageRender;
+use crate::error::DNSError;
+use crate::message_render::MessageRender;
+use crate::util::{InputBuffer, OutputBuffer};
+use failure::Result;
 use std::cmp;
 use std::fmt;
 use std::hash::{Hash, Hasher};
-use util::{InputBuffer, OutputBuffer};
 
 #[derive(Eq, PartialEq, Debug)]
 pub enum NameRelation {
@@ -134,7 +135,7 @@ fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8
         if state == FtStat::Init {
             if c == '.' {
                 if start != end {
-                    return Err(ErrorKind::NoneTerminateLabel.into());
+                    return Err(DNSError::NoneTerminateLabel.into());
                 } else {
                     is_root = true;
                 }
@@ -161,7 +162,7 @@ fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8
         } else if state == FtStat::Ordinary {
             if c == '.' {
                 if count == 0 {
-                    return Err(ErrorKind::DuplicatePeriod.into());
+                    return Err(DNSError::DuplicatePeriod.into());
                 }
                 data[offsets[offsets.len() - 1] as usize] = count;
                 offsets.push(data.len() as u8);
@@ -175,14 +176,14 @@ fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8
             } else {
                 count += 1;
                 if count > MAX_LABEL_LEN {
-                    return Err(ErrorKind::TooLongLabel.into());
+                    return Err(DNSError::TooLongLabel.into());
                 }
                 data.push(c as u8);
             }
             next_u8 = true;
         } else if state == FtStat::Initialescape {
             if c == '[' {
-                return Err(ErrorKind::InvalidLabelCharacter.into());
+                return Err(DNSError::InvalidLabelCharacter.into());
             }
             state = FtStat::Escape;
             next_u8 = false;
@@ -190,7 +191,7 @@ fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8
             if is_digit(c) == false {
                 count += 1;
                 if count > MAX_LABEL_LEN {
-                    return Err(ErrorKind::TooLongLabel.into());
+                    return Err(DNSError::TooLongLabel.into());
                 }
                 data.push(c as u8);
                 state = FtStat::Ordinary;
@@ -202,18 +203,18 @@ fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8
             next_u8 = false;
         } else if state == FtStat::Escdecimal {
             if is_digit(c) == false {
-                return Err(ErrorKind::InvalidDecimalFormat.into());
+                return Err(DNSError::InvalidDecimalFormat.into());
             }
             value = value * 10;
             value = value + digitvalue(c as usize) as i32;
             digits += 1;
             if digits == 3 {
                 if value > 255 {
-                    return Err(ErrorKind::InvalidDecimalFormat.into());
+                    return Err(DNSError::InvalidDecimalFormat.into());
                 }
                 count += 1;
                 if count > MAX_LABEL_LEN {
-                    return Err(ErrorKind::TooLongLabel.into());
+                    return Err(DNSError::TooLongLabel.into());
                 }
                 data.push(c as u8);
                 state = FtStat::Ordinary;
@@ -226,11 +227,11 @@ fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8
 
     if done == false {
         if data.len() == MAX_WIRE_LEN {
-            return Err(ErrorKind::TooLongName.into());
+            return Err(DNSError::TooLongName.into());
         }
         assert!(start == end);
         if state != FtStat::Ordinary {
-            return Err(ErrorKind::InCompleteName.into());
+            return Err(DNSError::InCompleteName.into());
         } else {
             assert!(count != 0);
             data[offsets[offsets.len() - 1] as usize] = count as u8;
@@ -271,7 +272,7 @@ impl Name {
         let mut new_current: usize = 0;
 
         while current < buf.len() && done == false {
-            let c = try!(buf.read_u8());
+            let c = buf.read_u8()?;
             current += 1;
             if seen_pointer == false {
                 cused += 1;
@@ -281,7 +282,7 @@ impl Name {
                 if c <= MAX_LABEL_LEN {
                     offsets.push(nused as u8);
                     if nused + (c as usize) + 1 > MAX_WIRE_LEN {
-                        return Err(ErrorKind::TooLongName.into());
+                        return Err(DNSError::TooLongName.into());
                     }
 
                     nused += (c as usize) + 1;
@@ -296,7 +297,7 @@ impl Name {
                     n = 1;
                     state = FwStat::NewCurrent;
                 } else {
-                    return Err(ErrorKind::InvalidLabelCharacter.into());
+                    return Err(DNSError::InvalidLabelCharacter.into());
                 }
             } else if state == FwStat::Ordinary {
                 data.push(c);
@@ -312,7 +313,7 @@ impl Name {
                     break;
                 }
                 if new_current >= biggest_pointer {
-                    return Err(ErrorKind::BadCompressPointer.into());
+                    return Err(DNSError::BadCompressPointer.into());
                 }
                 biggest_pointer = new_current;
                 current = new_current;
@@ -323,7 +324,7 @@ impl Name {
         }
 
         if done == false {
-            return Err(ErrorKind::InCompleteName.into());
+            return Err(DNSError::InCompleteName.into());
         }
 
         buf.set_position(pos_beg + cused);
@@ -486,9 +487,9 @@ impl Name {
         }
 
         if (final_length as usize) > MAX_WIRE_LEN {
-            return Err(ErrorKind::TooLongName.into());
+            return Err(DNSError::TooLongName.into());
         } else if final_label_count > MAX_LABEL_COUNT {
-            return Err(ErrorKind::TooLongLabel.into());
+            return Err(DNSError::TooLongLabel.into());
         }
 
         let mut raw = Vec::with_capacity(final_length as usize);
@@ -553,7 +554,7 @@ impl Name {
     pub fn split(&self, start_label: usize, label_count_: usize) -> Result<Name> {
         let max_label_count = self.label_count as usize;
         if start_label >= max_label_count {
-            return Err(ErrorKind::InvalidLabelIndex.into());
+            return Err(DNSError::InvalidLabelIndex.into());
         }
         let mut label_count = label_count_;
         if start_label + label_count > max_label_count {

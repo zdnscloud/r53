@@ -1,9 +1,9 @@
-use edns::Edns;
-use header_flag::HeaderFlag;
-use message::{Message, Section, SectionType};
-use opcode::Opcode;
-use rcode::Rcode;
-use rrset::RRset;
+use crate::edns::Edns;
+use crate::header_flag::HeaderFlag;
+use crate::message::{Message, Section, SectionType};
+use crate::opcode::Opcode;
+use crate::rcode::Rcode;
+use crate::rrset::RRset;
 
 pub struct MessageBuilder<'a> {
     msg: &'a mut Message,

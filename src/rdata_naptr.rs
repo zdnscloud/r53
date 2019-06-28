@@ -1,7 +1,7 @@
-use error::Error;
-use message_render::MessageRender;
-use name::Name;
-use util::{InputBuffer, OutputBuffer};
+use crate::message_render::MessageRender;
+use crate::name::Name;
+use crate::util::{InputBuffer, OutputBuffer};
+use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NAPTR {
@@ -13,7 +13,7 @@ pub struct NAPTR {
 }
 
 impl NAPTR {
-    pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self, Error> {
+    pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self> {
         let order = buf.read_u16()?;
         let preference = buf.read_u16()?;
         let flags = buf.read_u16()?;

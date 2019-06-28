@@ -1,15 +1,14 @@
+use crate::message_render::MessageRender;
+use crate::util::{InputBuffer, OutputBuffer};
+use failure::Result;
 use std::net::Ipv6Addr;
-
-use error::Error;
-use message_render::MessageRender;
-use util::{InputBuffer, OutputBuffer};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AAAA {
     host: Ipv6Addr,
 }
 
-fn get_ipv6_addr(buf: &mut InputBuffer) -> Result<Ipv6Addr, Error> {
+fn get_ipv6_addr(buf: &mut InputBuffer) -> Result<Ipv6Addr> {
     buf.read_bytes(16).map(|bytes| {
         let mut octs = [0; 16];
         octs.copy_from_slice(bytes);
@@ -18,7 +17,7 @@ fn get_ipv6_addr(buf: &mut InputBuffer) -> Result<Ipv6Addr, Error> {
 }
 
 impl AAAA {
-    pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self, Error> {
+    pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self> {
         get_ipv6_addr(buf).map(|addr| AAAA { host: addr })
     }
 
@@ -44,7 +43,7 @@ impl AAAA {
 #[cfg(test)]
 mod test {
     use super::*;
-    use util::hex::from_hex;
+    use crate::util::hex::from_hex;
 
     #[test]
     fn test_aaaa_to_wire() {

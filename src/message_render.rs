@@ -1,5 +1,5 @@
-use name::{Name, COMPRESS_POINTER_MARK16, COMPRESS_POINTER_MARK8, MAX_LABEL_COUNT};
-use util::{InputBuffer, OutputBuffer};
+use crate::name::{Name, COMPRESS_POINTER_MARK16, COMPRESS_POINTER_MARK8, MAX_LABEL_COUNT};
+use crate::util::{InputBuffer, OutputBuffer};
 
 const MAX_COMPRESS_POINTER: usize = 0x3fff;
 const HASH_SEED: u32 = 0x9e3779b9;
@@ -270,9 +270,9 @@ impl MessageRender {
 #[cfg(test)]
 mod test {
     use super::*;
-    use message::Message;
-    use name::Name;
-    use util::hex::from_hex;
+    use crate::message::Message;
+    use crate::name::Name;
+    use crate::util::hex::from_hex;
 
     #[test]
     fn test_write_name() {

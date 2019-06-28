@@ -1,8 +1,7 @@
+use crate::message_render::MessageRender;
+use crate::util::{InputBuffer, OutputBuffer};
+use failure::Result;
 use std::fmt;
-
-use error::Error;
-use message_render::MessageRender;
-use util::{InputBuffer, OutputBuffer};
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 #[allow(dead_code)]
@@ -49,7 +48,7 @@ impl RRClass {
         }
     }
 
-    pub fn from_wire(buf: &mut InputBuffer) -> Result<Self, Error> {
+    pub fn from_wire(buf: &mut InputBuffer) -> Result<Self> {
         buf.read_u16().map(|n| RRClass::new(n))
     }
 

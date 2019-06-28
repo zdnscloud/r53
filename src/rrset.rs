@@ -1,17 +1,17 @@
-use error::Error;
-use message_render::MessageRender;
-use name::Name;
-use rdata::RData;
-use rr_class::RRClass;
-use rr_type::RRType;
+use crate::message_render::MessageRender;
+use crate::name::Name;
+use crate::rdata::RData;
+use crate::rr_class::RRClass;
+use crate::rr_type::RRType;
+use crate::util::{InputBuffer, OutputBuffer};
+use failure::Result;
 use std::fmt::Write;
-use util::{InputBuffer, OutputBuffer};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct RRTtl(pub u32);
 
 impl RRTtl {
-    pub fn from_wire(buf: &mut InputBuffer) -> Result<Self, Error> {
+    pub fn from_wire(buf: &mut InputBuffer) -> Result<Self> {
         buf.read_u32().map(|n| RRTtl(n))
     }
 
@@ -38,7 +38,7 @@ pub struct RRset {
 }
 
 impl RRset {
-    pub fn from_wire(buf: &mut InputBuffer) -> Result<Self, Error> {
+    pub fn from_wire(buf: &mut InputBuffer) -> Result<Self> {
         let name = Name::from_wire(buf)?;
         let typ = RRType::from_wire(buf)?;
         let class = RRClass::from_wire(buf)?;
@@ -131,9 +131,9 @@ impl RRset {
 
 #[cfg(test)]
 mod test {
-    use super::super::rdata_a::A;
     use super::*;
-    use util::hex::from_hex;
+    use crate::rdata_a::A;
+    use crate::util::hex::from_hex;
 
     #[test]
     fn test_rrset_to_wire() {

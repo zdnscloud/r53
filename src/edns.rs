@@ -1,9 +1,9 @@
-use message_render::MessageRender;
-use rr_class::RRClass;
-use rr_type::RRType;
-use rrset::{RRTtl, RRset};
+use crate::message_render::MessageRender;
+use crate::rr_class::RRClass;
+use crate::rr_type::RRType;
+use crate::rrset::{RRTtl, RRset};
+use crate::util::OutputBuffer;
 use std::fmt::Write;
-use util::OutputBuffer;
 
 const VERSION_SHIFT: u32 = 16;
 const EXTRCODE_SHIFT: u32 = 24;
@@ -84,9 +84,8 @@ impl Edns {
 
 #[cfg(test)]
 mod test {
-    use super::super::util::InputBuffer;
     use super::*;
-    use util::hex::from_hex;
+    use crate::util::{hex::from_hex, InputBuffer};
 
     #[test]
     fn test_edns_to_wire() {

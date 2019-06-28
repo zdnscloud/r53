@@ -1,7 +1,7 @@
-use error::Error;
-use message_render::MessageRender;
-use name::Name;
-use util::{InputBuffer, OutputBuffer};
+use crate::message_render::MessageRender;
+use crate::name::Name;
+use crate::util::{InputBuffer, OutputBuffer};
+use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NS {
@@ -9,11 +9,11 @@ pub struct NS {
 }
 
 impl NS {
-    pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self, Error> {
+    pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self> {
         Name::from_wire(buf).map(|name| NS { name: name })
     }
 
-    pub fn from_string(name_str: &str) -> Result<Self, Error> {
+    pub fn from_string(name_str: &str) -> Result<Self> {
         let name = Name::new(name_str)?;
         Ok(NS { name: name })
     }
@@ -34,7 +34,7 @@ impl NS {
 #[cfg(test)]
 mod test {
     use super::*;
-    use util::hex::from_hex;
+    use crate::util::hex::from_hex;
 
     #[test]
     fn test_ns_to_wire() {

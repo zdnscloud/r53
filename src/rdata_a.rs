@@ -1,8 +1,9 @@
 use std::net::Ipv4Addr;
 
-use error::*;
-use message_render::MessageRender;
-use util::{InputBuffer, OutputBuffer};
+use crate::error::DNSError;
+use crate::message_render::MessageRender;
+use crate::util::{InputBuffer, OutputBuffer};
+use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct A {
@@ -22,7 +23,7 @@ impl A {
     pub fn from_string(ip_str: &str) -> Result<Self> {
         match ip_str.parse() {
             Ok(ip) => Ok(A { host: ip }),
-            Err(_) => Err(ErrorKind::InvalidIPv4Address.into()),
+            Err(_) => Err(DNSError::InvalidIPv4Address.into()),
         }
     }
 
@@ -50,7 +51,7 @@ impl A {
 #[cfg(test)]
 mod test {
     use super::*;
-    use util::hex::from_hex;
+    use crate::util::hex::from_hex;
 
     #[test]
     fn test_a_to_wire() {

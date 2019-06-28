@@ -1,9 +1,9 @@
-use error::Error;
-use message_render::MessageRender;
-use name::Name;
-use rr_class::RRClass;
-use rr_type::RRType;
-use util::{InputBuffer, OutputBuffer};
+use crate::message_render::MessageRender;
+use crate::name::Name;
+use crate::rr_class::RRClass;
+use crate::rr_type::RRType;
+use crate::util::{InputBuffer, OutputBuffer};
+use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Question {
@@ -13,7 +13,7 @@ pub struct Question {
 }
 
 impl Question {
-    pub fn from_wire(buf: &mut InputBuffer) -> Result<Self, Error> {
+    pub fn from_wire(buf: &mut InputBuffer) -> Result<Self> {
         let name = Name::from_wire(buf)?;
         let typ = RRType::from_wire(buf)?;
         let class = RRClass::from_wire(buf)?;
@@ -49,7 +49,7 @@ impl Question {
 #[cfg(test)]
 mod test {
     use super::*;
-    use util::hex::from_hex;
+    use crate::util::hex::from_hex;
 
     #[test]
     fn test_question_to_wire() {

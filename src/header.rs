@@ -1,10 +1,10 @@
-use error::Error;
-use header_flag::{clear_flag, set_flag, setted_flags, HeaderFlag};
-use message_render::MessageRender;
-use opcode::Opcode;
-use rcode::Rcode;
+use crate::header_flag::{clear_flag, set_flag, setted_flags, HeaderFlag};
+use crate::message_render::MessageRender;
+use crate::opcode::Opcode;
+use crate::rcode::Rcode;
+use crate::util::{InputBuffer, OutputBuffer};
+use failure::Result;
 use std::fmt::Write;
-use util::{InputBuffer, OutputBuffer};
 
 const HEADERFLAG_MASK: u16 = 0x87b0;
 const OPCODE_MASK: u16 = 0x7800;
@@ -24,13 +24,13 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn from_wire(buf: &mut InputBuffer) -> Result<Self, Error> {
-        let id = try!(buf.read_u16());
-        let flag = try!(buf.read_u16());
-        let qd_count = try!(buf.read_u16());
-        let an_count = try!(buf.read_u16());
-        let ns_count = try!(buf.read_u16());
-        let ar_count = try!(buf.read_u16());
+    pub fn from_wire(buf: &mut InputBuffer) -> Result<Self> {
+        let id = buf.read_u16()?;
+        let flag = buf.read_u16()?;
+        let qd_count = buf.read_u16()?;
+        let an_count = buf.read_u16()?;
+        let ns_count = buf.read_u16()?;
+        let ar_count = buf.read_u16()?;
         Ok(Header {
             id: id,
             flag: flag & HEADERFLAG_MASK,
@@ -131,7 +131,7 @@ impl Default for Header {
 #[cfg(test)]
 mod test {
     use super::*;
-    use util::hex::from_hex;
+    use crate::util::hex::from_hex;
 
     #[test]
     fn test_from_to_wire() {
