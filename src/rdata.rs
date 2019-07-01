@@ -10,6 +10,7 @@ use crate::rdata_ns;
 use crate::rdata_opt;
 use crate::rdata_ptr;
 use crate::rdata_soa;
+use crate::rdata_srv;
 use crate::rr_type::RRType;
 use crate::util::{InputBuffer, OutputBuffer};
 use failure::Result;
@@ -26,6 +27,7 @@ pub enum RData {
     NAPTR(Box<rdata_naptr::NAPTR>),
     DNAME(Box<rdata_dname::DName>),
     OPT(Box<rdata_opt::OPT>),
+    SRV(Box<rdata_srv::SRV>),
 }
 
 impl RData {
@@ -48,6 +50,7 @@ impl RData {
                 rdata_dname::DName::from_wire(buf, len).map(|dname| RData::DNAME(Box::new(dname)))
             }
             RRType::OPT => rdata_opt::OPT::from_wire(buf, len).map(|opt| RData::OPT(Box::new(opt))),
+            RRType::SRV => rdata_srv::SRV::from_wire(buf, len).map(|srv| RData::SRV(Box::new(srv))),
             _ => Err(DNSError::UnknownRRType(typ.to_u16()).into()),
         };
 
@@ -70,6 +73,7 @@ impl RData {
             RData::NAPTR(ref naptr) => naptr.rend(render),
             RData::DNAME(ref dname) => dname.rend(render),
             RData::OPT(ref opt) => opt.rend(render),
+            RData::SRV(ref srv) => srv.rend(render),
         }
     }
 
@@ -85,6 +89,7 @@ impl RData {
             RData::NAPTR(ref naptr) => naptr.to_wire(buf),
             RData::DNAME(ref dname) => dname.to_wire(buf),
             RData::OPT(ref opt) => opt.to_wire(buf),
+            RData::SRV(ref srv) => srv.to_wire(buf),
         }
     }
 
@@ -100,6 +105,7 @@ impl RData {
             RData::NAPTR(ref naptr) => naptr.to_string(),
             RData::DNAME(ref dname) => dname.to_string(),
             RData::OPT(ref opt) => opt.to_string(),
+            RData::SRV(ref srv) => srv.to_string(),
         }
     }
 }
