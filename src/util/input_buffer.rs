@@ -50,8 +50,8 @@ impl<'a> InputBuffer<'a> {
             return Err(DNSError::InCompleteWire.into());
         }
 
-        let mut num = (self.data[self.pos] as u16) << 8;
-        num |= self.data[self.pos + 1] as u16;
+        let mut num = u16::from(self.data[self.pos]) << 8;
+        num |= u16::from(self.data[self.pos + 1]);
         self.pos += 2;
         Ok(num)
     }
@@ -61,10 +61,10 @@ impl<'a> InputBuffer<'a> {
             return Err(DNSError::InCompleteWire.into());
         }
 
-        let mut num = (self.data[self.pos] as u32) << 24;
-        num |= (self.data[self.pos + 1] as u32) << 16;
-        num |= (self.data[self.pos + 2] as u32) << 8;
-        num |= self.data[self.pos + 3] as u32;
+        let mut num = u32::from(self.data[self.pos]) << 24;
+        num |= u32::from(self.data[self.pos + 1]) << 16;
+        num |= u32::from(self.data[self.pos + 2]) << 8;
+        num |= u32::from(self.data[self.pos + 3]);
         self.pos += 4;
         Ok(num)
     }
