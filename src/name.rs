@@ -44,7 +44,7 @@ pub struct NameComparisonResult {
     pub relation: NameRelation,
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 enum FtStat {
     Init,
     Start,
@@ -126,8 +126,11 @@ fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8
     let mut c: char = 0 as char;
 
     offsets.push(0);
-    while data.len() < MAX_WIRE_LEN && start != end && done == false {
+    loop {
         if next_u8 {
+            if data.len() >= MAX_WIRE_LEN || start == end || done {
+                break;
+            }
             c = name_raw[start] as char;
             start += 1;
         }
@@ -927,6 +930,12 @@ mod test {
         let name3 = Name::new("wwwnnnnnnnnnnnnn.KNET.cNNNNNNNNN.baidu.com.cn.net").unwrap();
         assert_eq!(hash_helper(&name1), hash_helper(&name2));
         assert_ne!(hash_helper(&name1), hash_helper(&name3));
+    }
+
+    #[test]
+    fn test_short_name() {
+        let name = Name::new("c").unwrap();
+        assert_eq!(name.to_string(), "c.");
     }
 
     #[test]
