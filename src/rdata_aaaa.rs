@@ -22,17 +22,11 @@ impl AAAA {
     }
 
     pub fn rend(&self, render: &mut MessageRender) {
-        self.host
-            .octets()
-            .into_iter()
-            .for_each(|x| render.write_u8(*x));
+        self.host.octets().iter().for_each(|x| render.write_u8(*x));
     }
 
     pub fn to_wire(&self, buf: &mut OutputBuffer) {
-        self.host
-            .octets()
-            .into_iter()
-            .for_each(|x| buf.write_u8(*x));
+        self.host.octets().iter().for_each(|x| buf.write_u8(*x));
     }
 
     pub fn to_string(&self) -> String {
