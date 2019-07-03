@@ -50,11 +50,11 @@ impl RRset {
             rdatas.push(rdata);
         }
         Ok(RRset {
-            name: name,
-            typ: typ,
-            class: class,
-            ttl: ttl,
-            rdatas: rdatas,
+            name,
+            typ,
+            class,
+            ttl,
+            rdatas,
         })
     }
 
@@ -105,7 +105,7 @@ impl RRset {
     pub fn to_string(&self) -> String {
         let mut rrset_str = String::new();
         self.rdatas.iter().for_each(|rdata| {
-            write!(&mut rrset_str, "{}\t{}\n", self.header(), rdata.to_string()).unwrap();
+            writeln!(&mut rrset_str, "{}\t{}", self.header(), rdata.to_string()).unwrap();
         });
         rrset_str
     }

@@ -11,7 +11,7 @@ pub struct MessageBuilder<'a> {
 
 impl<'a> MessageBuilder<'a> {
     pub fn new(msg: &'a mut Message) -> Self {
-        MessageBuilder { msg: msg }
+        MessageBuilder { msg }
     }
 
     pub fn id(&mut self, id: u16) -> &mut Self {

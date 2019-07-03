@@ -13,10 +13,7 @@ impl MX {
     pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self> {
         let preference = buf.read_u16()?;
         let name = Name::from_wire(buf)?;
-        Ok(MX {
-            preference: preference,
-            name: name,
-        })
+        Ok(MX { preference, name })
     }
 
     pub fn rend(&self, render: &mut MessageRender) {

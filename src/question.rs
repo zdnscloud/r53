@@ -17,11 +17,7 @@ impl Question {
         let name = Name::from_wire(buf)?;
         let typ = RRType::from_wire(buf)?;
         let class = RRClass::from_wire(buf)?;
-        Ok(Question {
-            name: name,
-            typ: typ,
-            class: class,
-        })
+        Ok(Question { name, typ, class })
     }
 
     pub fn rend(&self, render: &mut MessageRender) {

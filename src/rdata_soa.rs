@@ -24,13 +24,13 @@ impl SOA {
         let expire = buf.read_u32()?;
         let minimum = buf.read_u32()?;
         Ok(SOA {
-            mname: mname,
-            rname: rname,
-            serial: serial,
-            refresh: refresh,
-            retry: retry,
-            expire: expire,
-            minimum: minimum,
+            mname,
+            rname,
+            serial,
+            refresh,
+            retry,
+            expire,
+            minimum,
         })
     }
 

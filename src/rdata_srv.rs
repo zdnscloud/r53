@@ -5,12 +5,12 @@ use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SRV {
-    priority:u16,
-    weight  :u16,
-    port    :u16,
-    target  :Name,
+    priority: u16,
+    weight: u16,
+    port: u16,
+    target: Name,
 }
- 
+
 impl SRV {
     pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self> {
         let priority = buf.read_u16()?;
@@ -18,10 +18,10 @@ impl SRV {
         let port = buf.read_u16()?;
         let target = Name::from_wire(buf)?;
         Ok(SRV {
-            priority: priority,
-            weight: weight,
-            port: port,
-            target: target,
+            priority,
+            weight,
+            port,
+            target,
         })
     }
 
@@ -40,7 +40,13 @@ impl SRV {
     }
 
     pub fn to_string(&self) -> String {
-        [self.priority.to_string(), self.weight.to_string(), self.port.to_string(), self.target.to_string()].join(" ")
+        [
+            self.priority.to_string(),
+            self.weight.to_string(),
+            self.port.to_string(),
+            self.target.to_string(),
+        ]
+        .join(" ")
     }
 }
 

@@ -2,7 +2,7 @@ use crate::name::{Name, COMPRESS_POINTER_MARK16, COMPRESS_POINTER_MARK8, MAX_LAB
 use crate::util::{InputBuffer, OutputBuffer};
 
 const MAX_COMPRESS_POINTER: usize = 0x3fff;
-const HASH_SEED: u32 = 0x9e3779b9;
+const HASH_SEED: u32 = 0x9e37_79b9;
 
 #[derive(Clone, Copy)]
 struct OffSetItem {
@@ -25,7 +25,7 @@ impl<'a> NameRef<'a> {
     fn from_name(name: &'a Name) -> Self {
         NameRef {
             parent_level: 0,
-            name: name,
+            name,
         }
     }
 
@@ -44,7 +44,7 @@ impl<'a> NameRef<'a> {
 
     fn hash(&self) -> u32 {
         self.raw_data().iter().fold(0, |hash, c| {
-            hash ^ ((*c as u32)
+            hash ^ (u32::from(*c)
                 .wrapping_add(HASH_SEED)
                 .wrapping_add(hash << 6)
                 .wrapping_add(hash >> 2))
@@ -86,8 +86,8 @@ impl<'a> NameComparator<'a> {
         let mut next_pos = pos as usize;
         let mut b = self.buffer.at(next_pos);
         while b & COMPRESS_POINTER_MARK8 == COMPRESS_POINTER_MARK8 {
-            let nb = self.buffer.at(next_pos + 1) as u16;
-            next_pos = (((b & !(COMPRESS_POINTER_MARK8 as u8)) as u16) * 256 + nb) as usize;
+            let nb = u16::from(self.buffer.at(next_pos + 1));
+            next_pos = (u16::from(b & !(COMPRESS_POINTER_MARK8 as u8)) * 256 + nb) as usize;
             b = self.buffer.at(next_pos);
         }
         (b, (next_pos + 1) as u16)
@@ -135,7 +135,7 @@ impl MessageRender {
         let bucket_id = hash % (BUCKETS as u32);
         let comparator = NameComparator {
             buffer: &self.buffer,
-            hash: hash,
+            hash,
         };
         for item in &self.table[bucket_id as usize] {
             if comparator.compare(&item, name_buffer) {
@@ -148,9 +148,9 @@ impl MessageRender {
     pub fn add_offset(&mut self, hash: u32, offset: u16, len: u8) {
         let bucket_id = hash % (BUCKETS as u32);
         self.table[bucket_id as usize].push(OffSetItem {
-            hash: hash,
+            hash,
             pos: offset,
-            len: len,
+            len,
         });
     }
 
@@ -192,7 +192,7 @@ impl MessageRender {
         }
 
         let mut name_pos = self.buffer.len();
-        if compress == false || label_uncompressed == label_count {
+        if !compress || label_uncompressed == label_count {
             self.buffer.write_bytes(name.raw_data());
         } else if label_uncompressed > 0 {
             let pos = name.offsets()[label_uncompressed as usize];
@@ -232,6 +232,10 @@ impl MessageRender {
 
     pub fn len(&self) -> usize {
         self.buffer.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.buffer.len() == 0
     }
 
     pub fn skip(&mut self, len: usize) {

@@ -10,12 +10,12 @@ pub struct NS {
 
 impl NS {
     pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self> {
-        Name::from_wire(buf).map(|name| NS { name: name })
+        Name::from_wire(buf).map(|name| NS { name })
     }
 
     pub fn from_string(name_str: &str) -> Result<Self> {
         let name = Name::new(name_str)?;
-        Ok(NS { name: name })
+        Ok(NS { name })
     }
 
     pub fn rend(&self, render: &mut MessageRender) {

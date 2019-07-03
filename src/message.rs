@@ -52,15 +52,15 @@ impl Section {
     }
 
     pub fn rend(&self, render: &mut MessageRender) {
-        self.0.as_ref().map(|rrsets| {
+        if let Some(rrsets) = self.0.as_ref() {
             rrsets.iter().for_each(|rrset| rrset.rend(render));
-        });
+        }
     }
 
     pub fn to_wire(&self, buf: &mut OutputBuffer) {
-        self.0.as_ref().map(|rrsets| {
+        if let Some(rrsets) = self.0.as_ref() {
             rrsets.iter().for_each(|rrset| rrset.to_wire(buf));
-        });
+        }
     }
 
     pub fn to_string(&self) -> String {
@@ -85,20 +85,20 @@ impl Message {
     pub fn with_query(name: Name, qtype: RRType) -> Self {
         let mut header: Header = Default::default();
         header.set_flag(HeaderFlag::RecursionDesired, true);
-        return Message {
-            header: header,
+        Message {
+            header,
             question: Question {
-                name: name,
+                name,
                 typ: qtype,
                 class: RRClass::IN,
             },
             sections: [Section(None), Section(None), Section(None)],
             edns: None,
-        };
+        }
     }
 
     pub fn from_wire(raw: &[u8]) -> Result<Self> {
-        let ref mut buf = InputBuffer::new(raw);
+        let buf = &mut InputBuffer::new(raw);
         let header = Header::from_wire(buf)?;
         if header.qd_count != 1 {
             return Err(DNSError::ShortOfQuestion.into());
@@ -118,10 +118,10 @@ impl Message {
         }
 
         Ok(Message {
-            header: header,
-            question: question,
+            header,
+            question,
             sections: [answer, auth, additional],
-            edns: edns,
+            edns,
         })
     }
 
@@ -139,7 +139,9 @@ impl Message {
         self.sections
             .iter()
             .for_each(|section| section.rend(render));
-        self.edns.as_ref().map(|edns| edns.rend(render));
+        if let Some(edns) = self.edns.as_ref() {
+            edns.rend(render)
+        }
     }
 
     pub fn to_wire(&self, buf: &mut OutputBuffer) {
@@ -148,15 +150,17 @@ impl Message {
         self.sections
             .iter()
             .for_each(|section| section.to_wire(buf));
-        self.edns.as_ref().map(|edns| edns.to_wire(buf));
+        if let Some(edns) = self.edns.as_ref() {
+            edns.to_wire(buf)
+        }
     }
 
     pub fn to_string(&self) -> String {
         let mut message_str = String::new();
         write!(message_str, "{}", self.header.to_string()).unwrap();
-        self.edns.as_ref().map(|edns| {
+        if let Some(edns) = self.edns.as_ref() {
             write!(message_str, ";; OPT PSEUDOSECTION:\n{}", edns.to_string()).unwrap();
-        });
+        }
 
         write!(
             message_str,

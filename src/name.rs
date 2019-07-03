@@ -191,7 +191,7 @@ fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8
             state = FtStat::Escape;
             next_u8 = false;
         } else if state == FtStat::Escape {
-            if is_digit(c) == false {
+            if !is_digit(c) {
                 count += 1;
                 if count > MAX_LABEL_LEN {
                     return Err(DNSError::TooLongLabel.into());
@@ -205,11 +205,11 @@ fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8
             state = FtStat::Escdecimal;
             next_u8 = false;
         } else if state == FtStat::Escdecimal {
-            if is_digit(c) == false {
+            if !is_digit(c) {
                 return Err(DNSError::InvalidDecimalFormat.into());
             }
-            value = value * 10;
-            value = value + digitvalue(c as usize) as i32;
+            value *= 10;
+            value += i32::from(digitvalue(c as usize));
             digits += 1;
             if digits == 3 {
                 if value > 255 {
@@ -228,7 +228,7 @@ fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8
         }
     }
 
-    if done == false {
+    if !done {
         if data.len() == MAX_WIRE_LEN {
             return Err(DNSError::TooLongName.into());
         }
@@ -254,7 +254,7 @@ impl Name {
                 length: data.len() as u8,
                 label_count: offsets.len() as u8,
                 raw: data,
-                offsets: offsets,
+                offsets,
             }),
             Err(e) => Err(e),
         }
@@ -274,10 +274,10 @@ impl Name {
         let mut biggest_pointer = current;
         let mut new_current: usize = 0;
 
-        while current < buf.len() && done == false {
+        while current < buf.len() && !done {
             let c = buf.read_u8()?;
             current += 1;
-            if seen_pointer == false {
+            if !seen_pointer {
                 cused += 1;
             }
 
@@ -326,7 +326,7 @@ impl Name {
             }
         }
 
-        if done == false {
+        if !done {
             return Err(DNSError::InCompleteName.into());
         }
 
@@ -335,7 +335,7 @@ impl Name {
             length: data.len() as u8,
             label_count: offsets.len() as u8,
             raw: data,
-            offsets: offsets,
+            offsets,
         })
     }
 
@@ -343,8 +343,12 @@ impl Name {
         self.length as usize
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.length == 0
+    }
+
     pub fn label_count(&self) -> usize {
-        return self.label_count as usize;
+        self.label_count as usize
     }
 
     pub fn to_wire(&self, buf: &mut OutputBuffer) {
@@ -364,12 +368,12 @@ impl Name {
             i += 1;
 
             if count == 0 {
-                buf.push('.' as u8);
+                buf.push(b'.' as u8);
                 break;
             }
 
-            if buf.len() != 0 {
-                buf.push('.' as u8);
+            if !buf.is_empty() {
+                buf.push(b'.' as u8);
             }
 
             while count > 0 {
@@ -377,17 +381,15 @@ impl Name {
                 let c: u8 = self.raw[i as usize];
                 i += 1;
                 if special_char.contains(&c) {
-                    buf.push('\\' as u8);
+                    buf.push(b'\\' as u8);
+                    buf.push(c);
+                } else if c > 0x20 && c < 0x7f {
                     buf.push(c);
                 } else {
-                    if c > 0x20 && c < 0x7f {
-                        buf.push(c);
-                    } else {
-                        buf.push(0x5c);
-                        buf.push(0x30 + ((c / 100) % 10));
-                        buf.push(0x30 + ((c / 10) % 10));
-                        buf.push(0x30 + (c % 10));
-                    }
+                    buf.push(0x5c);
+                    buf.push(0x30 + ((c / 100) % 10));
+                    buf.push(0x30 + ((c / 10) % 10));
+                    buf.push(0x30 + (c % 10));
                 }
             }
         }
@@ -460,23 +462,23 @@ impl Name {
         }
 
         if ldiff < 0 {
-            return NameComparisonResult {
+            NameComparisonResult {
                 order: ldiff,
                 common_label_count: nlabels,
                 relation: NameRelation::SuperDomain,
-            };
+            }
         } else if ldiff > 0 {
-            return NameComparisonResult {
+            NameComparisonResult {
                 order: ldiff,
                 common_label_count: nlabels,
                 relation: NameRelation::SubDomain,
-            };
+            }
         } else {
-            return NameComparisonResult {
+            NameComparisonResult {
                 order: ldiff,
                 common_label_count: nlabels,
                 relation: NameRelation::Equal,
-            };
+            }
         }
     }
 
@@ -515,15 +517,15 @@ impl Name {
         }
 
         Ok(Name {
-            raw: raw,
-            offsets: offsets,
+            raw,
+            offsets,
             length: final_length,
             label_count: final_label_count,
         })
     }
 
     pub fn concat(&self, suffix: &Name) -> Result<Name> {
-        return self.concat_all(&[suffix]);
+        self.concat_all(&[suffix])
     }
 
     pub fn reverse(&self) -> Name {
@@ -549,8 +551,8 @@ impl Name {
         Name {
             length: self.length,
             label_count: self.label_count,
-            raw: raw,
-            offsets: offsets,
+            raw,
+            offsets,
         }
     }
 
@@ -577,12 +579,12 @@ impl Name {
             Ok(Name {
                 length: self.length - (start_pos as u8),
                 label_count: label_count as u8,
-                raw: raw,
-                offsets: offsets,
+                raw,
+                offsets,
             })
         } else {
             let mut offsets = Vec::with_capacity(label_count + 1);
-            offsets.extend_from_slice(&self.offsets[start_label..start_label + label_count + 1]);
+            offsets.extend_from_slice(&self.offsets[start_label..=start_label + label_count]);
             let mut raw = Vec::with_capacity((offsets[label_count] - offsets[0] + 1) as usize);
             raw.extend_from_slice(
                 &self.raw[(offsets[0] as usize)..(offsets[label_count] as usize)],
@@ -596,8 +598,8 @@ impl Name {
             Ok(Name {
                 length: (raw.len() as u8),
                 label_count: (label_count as u8) + 1,
-                raw: raw,
-                offsets: offsets,
+                raw,
+                offsets,
             })
         }
     }
@@ -641,8 +643,8 @@ impl Name {
         Name {
             length: new_length as u8,
             label_count: new_label_count as u8,
-            raw: raw,
-            offsets: offsets,
+            raw,
+            offsets,
         }
     }
 
@@ -667,12 +669,12 @@ impl Name {
     }
 
     pub fn clone(&self) -> Name {
-        return Name {
+        Name {
             length: self.length,
             label_count: self.label_count,
             raw: self.raw.clone(),
             offsets: self.offsets.clone(),
-        };
+        }
     }
 
     pub fn strip_right(&self, label_count: usize) -> Name {
@@ -686,16 +688,16 @@ impl Name {
         let end_label = new_label_count - 1;
         let end_pos = self.offsets[end_label] as usize;
         let mut raw = Vec::with_capacity(end_pos + 1);
-        raw.extend_from_slice(&self.raw[0..end_pos + 1]);
+        raw.extend_from_slice(&self.raw[0..=end_pos]);
         raw[end_pos] = 0;
 
         let mut offsets = Vec::with_capacity(new_label_count);
-        offsets.extend_from_slice(&self.offsets[0..end_label + 1]);
+        offsets.extend_from_slice(&self.offsets[0..=end_label]);
         Name {
             length: end_pos as u8 + 1,
             label_count: new_label_count as u8,
-            raw: raw,
-            offsets: offsets,
+            raw,
+            offsets,
         }
     }
 
@@ -733,7 +735,7 @@ impl Name {
             j -= 1;
             i -= 1;
         }
-        return true;
+        true
     }
 
     pub fn raw_data(&self) -> &[u8] {
