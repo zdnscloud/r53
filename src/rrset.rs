@@ -12,18 +12,18 @@ pub struct RRTtl(pub u32);
 
 impl RRTtl {
     pub fn from_wire(buf: &mut InputBuffer) -> Result<Self> {
-        buf.read_u32().map(|n| RRTtl(n))
+        buf.read_u32().map(RRTtl)
     }
 
-    pub fn rend(&self, render: &mut MessageRender) {
+    pub fn rend(self, render: &mut MessageRender) {
         render.write_u32(self.0);
     }
 
-    pub fn to_wire(&self, buf: &mut OutputBuffer) {
+    pub fn to_wire(self, buf: &mut OutputBuffer) {
         buf.write_u32(self.0);
     }
 
-    fn to_string(&self) -> String {
+    fn to_string(self) -> String {
         self.0.to_string()
     }
 }
@@ -59,7 +59,7 @@ impl RRset {
     }
 
     pub fn rend(&self, render: &mut MessageRender) {
-        if self.rdatas.len() == 0 {
+        if self.rdatas.is_empty() {
             self.name.rend(render);
             self.typ.rend(render);
             self.class.rend(render);
@@ -81,7 +81,7 @@ impl RRset {
     }
 
     pub fn to_wire(&self, buf: &mut OutputBuffer) {
-        if self.rdatas.len() == 0 {
+        if self.rdatas.is_empty() {
             self.name.to_wire(buf);
             self.typ.to_wire(buf);
             self.class.to_wire(buf);

@@ -15,6 +15,10 @@ impl OutputBuffer {
         self.data.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.data.len() == 0
+    }
+
     pub fn capacity(&self) -> usize {
         self.data.capacity()
     }

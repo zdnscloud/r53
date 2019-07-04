@@ -59,8 +59,8 @@ impl RRType {
         }
     }
 
-    pub fn to_u16(&self) -> u16 {
-        match *self {
+    pub fn to_u16(self) -> u16 {
+        match self {
             RRType::A => 1,
             RRType::NS => 2,
             RRType::CNAME => 5,
@@ -87,8 +87,8 @@ impl RRType {
         }
     }
 
-    fn to_string(&self) -> &'static str {
-        match *self {
+    fn to_string(self) -> &'static str {
+        match self {
             RRType::A => "A",
             RRType::NS => "NS",
             RRType::CNAME => "CNAME",
@@ -116,7 +116,7 @@ impl RRType {
     }
 
     pub fn from_wire(buf: &mut InputBuffer) -> Result<Self> {
-        buf.read_u16().map(|n| RRType::new(n))
+        buf.read_u16().map(RRType::new)
     }
 
     pub fn from_string(s: &str) -> Option<Self> {
@@ -147,18 +147,18 @@ impl RRType {
         }
     }
 
-    pub fn rend(&self, render: &mut MessageRender) {
+    pub fn rend(self, render: &mut MessageRender) {
         render.write_u16(self.to_u16());
     }
 
-    pub fn to_wire(&self, buf: &mut OutputBuffer) {
+    pub fn to_wire(self, buf: &mut OutputBuffer) {
         buf.write_u16(self.to_u16());
     }
 }
 
 impl fmt::Display for RRType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.to_string())
+        f.write_str(&self.to_string())
     }
 }
 

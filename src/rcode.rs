@@ -34,8 +34,8 @@ impl Rcode {
         }
     }
 
-    pub fn to_u8(&self) -> u8 {
-        match *self {
+    pub fn to_u8(self) -> u8 {
+        match self {
             Rcode::NoError => 0,
             Rcode::FormErr => 1,
             Rcode::ServFail => 2,
@@ -51,8 +51,8 @@ impl Rcode {
         }
     }
 
-    fn to_string(&self) -> &'static str {
-        match *self {
+    fn to_string(self) -> &'static str {
+        match self {
             Rcode::NoError => "NOERROR",
             Rcode::FormErr => "FORMERR",
             Rcode::ServFail => "SERVFAIL",
@@ -71,7 +71,7 @@ impl Rcode {
 
 impl fmt::Display for Rcode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.to_string())
+        f.write_str(&self.to_string())
     }
 }
 

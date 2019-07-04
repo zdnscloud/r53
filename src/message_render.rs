@@ -11,6 +11,7 @@ struct OffSetItem {
     hash: u32,
 }
 
+#[derive(Clone, Copy)]
 struct NameComparator<'a> {
     buffer: &'a OutputBuffer,
     hash: u32,
@@ -53,7 +54,7 @@ impl<'a> NameRef<'a> {
 }
 
 impl<'a> NameComparator<'a> {
-    pub fn compare(&self, item: &OffSetItem, name_buffer: &mut InputBuffer) -> bool {
+    pub fn compare(self, item: OffSetItem, name_buffer: &mut InputBuffer) -> bool {
         if item.hash != self.hash || item.len != (name_buffer.len() as u8) {
             return false;
         }
@@ -106,6 +107,12 @@ pub struct MessageRender {
     label_hashes: [u32; MAX_LABEL_COUNT as usize],
 }
 
+impl Default for MessageRender {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MessageRender {
     pub fn new() -> Self {
         let mut render = MessageRender {
@@ -138,7 +145,7 @@ impl MessageRender {
             hash,
         };
         for item in &self.table[bucket_id as usize] {
-            if comparator.compare(&item, name_buffer) {
+            if comparator.compare(*item, name_buffer) {
                 return item.pos;
             }
         }

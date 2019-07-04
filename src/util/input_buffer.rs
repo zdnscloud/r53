@@ -26,6 +26,10 @@ impl<'a> InputBuffer<'a> {
         self.datalen
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.datalen == 0
+    }
+
     pub fn position(&self) -> usize {
         self.pos
     }

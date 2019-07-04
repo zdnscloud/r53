@@ -26,8 +26,8 @@ impl RRClass {
         }
     }
 
-    pub fn to_u16(&self) -> u16 {
-        match *self {
+    pub fn to_u16(self) -> u16 {
+        match self {
             RRClass::IN => 1,
             RRClass::CH => 3,
             RRClass::HS => 4,
@@ -37,8 +37,8 @@ impl RRClass {
         }
     }
 
-    fn to_string(&self) -> &'static str {
-        match *self {
+    fn to_string(self) -> &'static str {
+        match self {
             RRClass::IN => "IN",
             RRClass::CH => "CH",
             RRClass::HS => "HS",
@@ -49,21 +49,21 @@ impl RRClass {
     }
 
     pub fn from_wire(buf: &mut InputBuffer) -> Result<Self> {
-        buf.read_u16().map(|n| RRClass::new(n))
+        buf.read_u16().map(RRClass::new)
     }
 
-    pub fn rend(&self, render: &mut MessageRender) {
+    pub fn rend(self, render: &mut MessageRender) {
         render.write_u16(self.to_u16());
     }
 
-    pub fn to_wire(&self, buf: &mut OutputBuffer) {
+    pub fn to_wire(self, buf: &mut OutputBuffer) {
         buf.write_u16(self.to_u16());
     }
 }
 
 impl fmt::Display for RRClass {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.to_string())
+        f.write_str(&self.to_string())
     }
 }
 

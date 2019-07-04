@@ -368,12 +368,12 @@ impl Name {
             i += 1;
 
             if count == 0 {
-                buf.push(b'.' as u8);
+                buf.push(b'.');
                 break;
             }
 
             if !buf.is_empty() {
-                buf.push(b'.' as u8);
+                buf.push(b'.');
             }
 
             while count > 0 {
@@ -381,7 +381,7 @@ impl Name {
                 let c: u8 = self.raw[i as usize];
                 i += 1;
                 if special_char.contains(&c) {
-                    buf.push(b'\\' as u8);
+                    buf.push(b'\\');
                     buf.push(c);
                 } else if c > 0x20 && c < 0x7f {
                     buf.push(c);
@@ -591,7 +591,7 @@ impl Name {
             );
 
             let first_offset = self.offsets[start_label];
-            for i in 0..(label_count + 1) {
+            for i in 0..=label_count {
                 offsets[i] -= first_offset;
             }
             raw.push(0);

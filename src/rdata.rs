@@ -34,8 +34,8 @@ impl RData {
     pub fn from_wire(typ: RRType, buf: &mut InputBuffer, len: u16) -> Result<Self> {
         let pos = buf.position();
         let rdata = match typ {
-            RRType::A => rdata_a::A::from_wire(buf, len).map(|a| RData::A(a)),
-            RRType::AAAA => rdata_aaaa::AAAA::from_wire(buf, len).map(|aaaa| RData::AAAA(aaaa)),
+            RRType::A => rdata_a::A::from_wire(buf, len).map(RData::A),
+            RRType::AAAA => rdata_aaaa::AAAA::from_wire(buf, len).map(RData::AAAA),
             RRType::NS => rdata_ns::NS::from_wire(buf, len).map(|ns| RData::NS(Box::new(ns))),
             RRType::CNAME => {
                 rdata_cname::CName::from_wire(buf, len).map(|cname| RData::CName(Box::new(cname)))
