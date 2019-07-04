@@ -74,5 +74,6 @@ mod test {
     #[test]
     pub fn test_rrclass_equal() {
         assert_eq!(RRClass::IN.to_u16(), 1);
+        assert_eq!(RRClass::IN.to_string(), "IN");
     }
 }

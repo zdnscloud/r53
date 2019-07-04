@@ -169,5 +169,6 @@ mod test {
     #[test]
     pub fn test_rrtype_equal() {
         assert_eq!(RRType::A.to_u16(), 1);
+        assert_eq!(RRType::A.to_string(), "A");
     }
 }

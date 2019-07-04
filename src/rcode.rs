@@ -82,5 +82,6 @@ mod test {
     #[test]
     pub fn test_rcode_equal() {
         assert_eq!(Rcode::NoError.to_u8(), 0);
+        assert_eq!(Rcode::NoError.to_string(), "NOERROR");
     }
 }
