@@ -2,6 +2,7 @@ pub mod edns;
 pub mod error;
 pub mod header;
 pub mod header_flag;
+pub mod label_sequence;
 pub mod message;
 pub mod message_builder;
 pub mod message_render;
@@ -28,6 +29,7 @@ pub mod util;
 
 pub use header::Header;
 pub use header_flag::HeaderFlag;
+pub use label_sequence::LabelSequence;
 pub use message::Message;
 pub use message_builder::MessageBuilder;
 pub use message_render::MessageRender;
