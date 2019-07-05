@@ -6,7 +6,7 @@ use std::cmp;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum NameRelation {
     SuperDomain,
     SubDomain,
@@ -38,6 +38,7 @@ pub fn root() -> Name {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
 pub struct NameComparisonResult {
     pub order: i8,
     pub common_label_count: u8,
@@ -424,19 +425,15 @@ impl Name {
                 let chdiff =
                     (lower_caes(label1 as usize) as i8) - (lower_caes(label2 as usize) as i8);
                 if chdiff != 0 {
-                    if nlabels < 2 {
-                        return NameComparisonResult {
-                            order: chdiff,
-                            common_label_count: nlabels,
-                            relation: NameRelation::None,
-                        };
-                    } else {
-                        return NameComparisonResult {
-                            order: chdiff,
-                            common_label_count: nlabels,
-                            relation: NameRelation::CommonAncestor,
-                        };
-                    }
+                    return NameComparisonResult {
+                        order: chdiff,
+                        common_label_count: nlabels,
+                        relation: if nlabels == 0 {
+                            NameRelation::None
+                        } else {
+                            NameRelation::CommonAncestor
+                        },
+                    };
                 }
                 mincount -= 1;
                 ps1 += 1;
@@ -444,41 +441,29 @@ impl Name {
             }
 
             if cdiff != 0 {
-                if nlabels == 0 {
-                    return NameComparisonResult {
-                        order: cdiff,
-                        common_label_count: nlabels,
-                        relation: NameRelation::None,
-                    };
-                } else {
-                    return NameComparisonResult {
-                        order: cdiff,
-                        common_label_count: nlabels,
-                        relation: NameRelation::CommonAncestor,
-                    };
-                }
+                return NameComparisonResult {
+                    order: cdiff,
+                    common_label_count: nlabels,
+                    relation: if nlabels == 0 {
+                        NameRelation::None
+                    } else {
+                        NameRelation::CommonAncestor
+                    },
+                };
             }
             nlabels += 1;
         }
 
-        if ldiff < 0 {
-            NameComparisonResult {
-                order: ldiff,
-                common_label_count: nlabels,
-                relation: NameRelation::SuperDomain,
-            }
-        } else if ldiff > 0 {
-            NameComparisonResult {
-                order: ldiff,
-                common_label_count: nlabels,
-                relation: NameRelation::SubDomain,
-            }
-        } else {
-            NameComparisonResult {
-                order: ldiff,
-                common_label_count: nlabels,
-                relation: NameRelation::Equal,
-            }
+        NameComparisonResult {
+            order: ldiff,
+            common_label_count: nlabels,
+            relation: if ldiff < 0 {
+                NameRelation::SuperDomain
+            } else if ldiff > 0 {
+                NameRelation::SubDomain
+            } else {
+                NameRelation::Equal
+            },
         }
     }
 
@@ -880,7 +865,7 @@ mod test {
         let relation = www_knet_cn.get_relation(&www_knet_com);
         assert!(relation.order < 0);
         assert_eq!(relation.common_label_count, 1);
-        assert_eq!(relation.relation, NameRelation::None);
+        assert_eq!(relation.relation, NameRelation::CommonAncestor);
 
         let baidu_com = Name::new("baidu.com.").unwrap();
         let www_baidu_com = Name::new("www.baidu.com").unwrap();
