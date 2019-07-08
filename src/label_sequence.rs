@@ -55,9 +55,6 @@ impl<'a> LabelSequence<'a> {
         let mut nlabels: usize = 0;
         let mut l1: usize = self.get_label_count();
         let mut l2: usize = other.get_label_count();
-        println!("{}", l1);
-        println!("{}", l2);
-        println!("{}", (l1 as isize) - (l2 as isize));
         let mut ldiff = (l1 as isize) - (l2 as isize);
         let mut l = if (ldiff < 0) { l1 } else { l2 };
 
