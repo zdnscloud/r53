@@ -177,13 +177,13 @@ mod test {
         assert_eq!(ls1.equals(&ls2, true), false);
         let grand_parent = Name::new("com").unwrap();
         let ls_grand_parent = LabelSequence::new(&grand_parent).unwrap();
-        let parent = Name::new("baidu.com").unwrap();
+        let parent = Name::new("BaIdU.CoM").unwrap();
         let ls_parent = LabelSequence::new(&parent).unwrap();
-        let child = Name::new("www.baidu.com").unwrap();
+        let child = Name::new("wWw.bAiDu.cOm").unwrap();
         let mut ls_child = LabelSequence::new(&child).unwrap();
-        let brother = Name::new("aaa.baidu.com").unwrap();
+        let brother = Name::new("AaA.bAiDu.cOm").unwrap();
         let ls_brother = LabelSequence::new(&brother).unwrap();
-        let other = Name::new("aaa.baidu.cn").unwrap();
+        let other = Name::new("aAa.BaIdu.cN").unwrap();
         let mut ls_other = LabelSequence::new(&other).unwrap();
         assert_eq!(
             ls_grand_parent.compare(&ls_parent, false).relation,
