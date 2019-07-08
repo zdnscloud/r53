@@ -59,12 +59,7 @@ impl<'a> LabelSequence<'a> {
         println!("{}", l2);
         println!("{}", (l1 as isize) - (l2 as isize));
         let mut ldiff = (l1 as isize) - (l2 as isize);
-        let mut l: usize = 0;
-        if (ldiff < 0) {
-            l = l1;
-        } else {
-            l = l2;
-        }
+        let mut l = if (ldiff < 0) { l1 } else { l2 };
 
         while (l > 0) {
             l -= 1;
@@ -76,13 +71,8 @@ impl<'a> LabelSequence<'a> {
             let count2: usize = usize::from(other.data[pos2]);
             pos1 += 1;
             pos2 += 1;
-            let mut cdiff: isize = (count1 - count2) as isize;
-            let mut count: usize = 0;
-            if (cdiff < 0) {
-                count = count1;
-            } else {
-                count = count2;
-            }
+            let mut cdiff: isize = (count1 as isize) - (count2 as isize);
+            let mut count = if (cdiff < 0) { count1 } else { count2 };
 
             while (count > 0) {
                 let label1: u8 = self.data[pos1];
