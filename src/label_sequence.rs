@@ -84,7 +84,7 @@ impl<'a> LabelSequence<'a> {
                 }
                 if !chdiff {
                     return NameComparisonResult {
-                        order: (label1 - label2) as i8,
+                        order: (label1 as i8) - (label2 as i8),
                         common_label_count: nlabels as u8,
                         relation: if nlabels == 0 {
                             NameRelation::None
