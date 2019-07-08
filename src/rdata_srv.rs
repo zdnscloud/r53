@@ -5,10 +5,10 @@ use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SRV {
-    priority: u16,
-    weight: u16,
-    port: u16,
-    target: Name,
+    pub priority: u16,
+    pub weight: u16,
+    pub port: u16,
+    pub target: Name,
 }
 
 impl SRV {

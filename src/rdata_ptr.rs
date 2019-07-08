@@ -5,7 +5,7 @@ use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct PTR {
-    name: Name,
+    pub name: Name,
 }
 
 impl PTR {

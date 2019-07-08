@@ -5,7 +5,7 @@ use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct OPT {
-    data: Vec<u8>,
+    pub data: Vec<u8>,
 }
 
 impl OPT {

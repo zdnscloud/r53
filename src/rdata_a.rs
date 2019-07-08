@@ -7,7 +7,7 @@ use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct A {
-    host: Ipv4Addr,
+    pub host: Ipv4Addr,
 }
 
 fn get_ipv4_addr(buf: &mut InputBuffer) -> Result<Ipv4Addr> {

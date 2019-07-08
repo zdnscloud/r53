@@ -5,11 +5,11 @@ use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NAPTR {
-    order: u16,
-    preference: u16,
-    flags: u16,
-    services: u16,
-    replacement: Name,
+    pub order: u16,
+    pub preference: u16,
+    pub flags: u16,
+    pub services: u16,
+    pub replacement: Name,
 }
 
 impl NAPTR {

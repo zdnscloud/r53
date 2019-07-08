@@ -5,7 +5,7 @@ use std::net::Ipv6Addr;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AAAA {
-    host: Ipv6Addr,
+    pub host: Ipv6Addr,
 }
 
 fn get_ipv6_addr(buf: &mut InputBuffer) -> Result<Ipv6Addr> {

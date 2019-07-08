@@ -5,8 +5,8 @@ use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MX {
-    preference: u16,
-    name: Name,
+    pub preference: u16,
+    pub name: Name,
 }
 
 impl MX {
