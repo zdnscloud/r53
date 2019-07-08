@@ -1,4 +1,6 @@
 use crate::name::Name;
+use crate::name::NameComparisonResult;
+use crate::name::NameRelation;
 use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -43,6 +45,93 @@ impl<'a> LabelSequence<'a> {
             data.eq_ignore_ascii_case(other_data);
         }
         true
+    }
+
+    pub fn get_label_count(&self) -> usize {
+        self.last_label - self.first_label + 1
+    }
+
+    pub fn compare(&self, other: &LabelSequence, case_sensitive: bool) -> NameComparisonResult {
+        let mut nlabels: usize = 0;
+        let mut l1: usize = self.get_label_count();
+        let mut l2: usize = other.get_label_count();
+        let mut ldiff: isize = (l1 - l2) as isize;
+        let mut l: usize = 0;
+        if (ldiff < 0) {
+            l = l1;
+        } else {
+            l = l2;
+        }
+
+        while (l > 0) {
+            l -= 1;
+            l1 -= 1;
+            l2 -= 1;
+            let mut pos1: usize = usize::from(self.offsets[l1 + self.first_label]);
+            let mut pos2: usize = usize::from(other.offsets[l2 + other.first_label]);
+            let count1: usize = usize::from(self.data[pos1]);
+            let count2: usize = usize::from(other.data[pos2]);
+            pos1 += 1;
+            pos2 += 1;
+            let mut cdiff: isize = (count1 - count2) as isize;
+            let mut count: usize = 0;
+            if (cdiff < 0) {
+                count = count1;
+            } else {
+                count = count2;
+            }
+
+            while (count > 0) {
+                let label1: u8 = self.data[pos1];
+                let label2: u8 = other.data[pos2];
+                let mut chdiff: bool = true;
+                if case_sensitive {
+                    if (label1 - label2) != 0 {
+                        chdiff = false;
+                    }
+                } else {
+                    chdiff = label1.eq_ignore_ascii_case(&label2);
+                }
+                if !chdiff {
+                    return NameComparisonResult {
+                        order: (label1 - label2) as i8,
+                        common_label_count: nlabels as u8,
+                        relation: if nlabels == 0 {
+                            NameRelation::None
+                        } else {
+                            NameRelation::CommonAncestor
+                        },
+                    };
+                }
+                count -= 1;
+                pos1 += 1;
+                pos2 += 1;
+            }
+            if cdiff != 0 {
+                return NameComparisonResult {
+                    order: cdiff as i8,
+                    common_label_count: nlabels as u8,
+                    relation: if nlabels == 0 {
+                        NameRelation::None
+                    } else {
+                        NameRelation::CommonAncestor
+                    },
+                };
+            }
+            nlabels += 1;
+        }
+
+        NameComparisonResult {
+            order: ldiff as i8,
+            common_label_count: nlabels as u8,
+            relation: if ldiff < 0 {
+                NameRelation::SuperDomain
+            } else if ldiff > 0 {
+                NameRelation::SubDomain
+            } else {
+                NameRelation::Equal
+            },
+        }
     }
 }
 
