@@ -55,7 +55,10 @@ impl<'a> LabelSequence<'a> {
         let mut nlabels: usize = 0;
         let mut l1: usize = self.get_label_count();
         let mut l2: usize = other.get_label_count();
-        let mut ldiff: isize = (l1 - l2) as isize;
+        println!("{}", l1);
+        println!("{}", l2);
+        println!("{}", (l1 as isize) - (l2 as isize));
+        let mut ldiff = (l1 as isize) - (l2 as isize);
         let mut l: usize = 0;
         if (ldiff < 0) {
             l = l1;
@@ -133,6 +136,16 @@ impl<'a> LabelSequence<'a> {
             },
         }
     }
+
+    pub fn strip_left(&mut self, index: usize) {
+        assert!(index < self.get_label_count());
+        self.first_label += index;
+    }
+
+    pub fn strip_right(&mut self, index: usize) {
+        assert!(index < self.get_label_count());
+        self.last_label -= index;
+    }
 }
 
 #[cfg(test)]
@@ -172,5 +185,51 @@ mod test {
         );
         assert_eq!(ls1.equals(&ls2, false), true);
         assert_eq!(ls1.equals(&ls2, true), false);
+        let grand_parent = Name::new("com").unwrap();
+        let ls_grand_parent = LabelSequence::new(&grand_parent).unwrap();
+        let parent = Name::new("baidu.com").unwrap();
+        let ls_parent = LabelSequence::new(&parent).unwrap();
+        let child = Name::new("www.baidu.com").unwrap();
+        let mut ls_child = LabelSequence::new(&child).unwrap();
+        let brother = Name::new("aaa.baidu.com").unwrap();
+        let ls_brother = LabelSequence::new(&brother).unwrap();
+        let other = Name::new("aaa.baidu.cn").unwrap();
+        let mut ls_other = LabelSequence::new(&other).unwrap();
+        assert_eq!(
+            ls_grand_parent.compare(&ls_parent, false).relation,
+            NameRelation::SuperDomain
+        );
+        assert_eq!(
+            ls_parent.compare(&ls_child, false).relation,
+            NameRelation::SuperDomain
+        );
+        assert_eq!(
+            ls_child.compare(&ls_parent, false).relation,
+            NameRelation::SubDomain
+        );
+        assert_eq!(
+            ls_child.compare(&ls_grand_parent, false).relation,
+            NameRelation::SubDomain
+        );
+        assert_eq!(
+            ls_child.compare(&ls_brother, false).relation,
+            NameRelation::CommonAncestor
+        );
+        assert_eq!(
+            ls_child.compare(&ls_child, false).relation,
+            NameRelation::Equal
+        );
+        ls_child.strip_left(1);
+        ls_other.strip_left(1);
+        assert_eq!(
+            ls_child.compare(&ls_other, false).relation,
+            NameRelation::CommonAncestor
+        );
+        ls_child.strip_right(1);
+        ls_other.strip_right(1);
+        assert_eq!(
+            ls_child.compare(&ls_other, false).relation,
+            NameRelation::None
+        );
     }
 }
