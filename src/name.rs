@@ -1,4 +1,5 @@
 use crate::error::DNSError;
+use crate::label_sequence::LabelSequence;
 use crate::message_render::MessageRender;
 use crate::util::{InputBuffer, OutputBuffer};
 use core::convert::TryFrom;
@@ -400,72 +401,9 @@ impl Name {
     }
 
     pub fn get_relation(&self, other: &Name) -> NameComparisonResult {
-        let mut l1 = self.label_count;
-        let mut l2 = other.label_count;
-        let ldiff = (l1 as i8) - (l2 as i8);
-        let mut minl = cmp::min(l1, l2);
-        let mut nlabels = 0;
-
-        while minl > 0 {
-            minl -= 1;
-            l1 -= 1;
-            l2 -= 1;
-            let mut ps1 = self.offsets[l1 as usize];
-            let mut ps2 = other.offsets[l2 as usize];
-            let c1 = self.raw[ps1 as usize];
-            let c2 = other.raw[ps2 as usize];
-            ps1 += 1;
-            ps2 += 1;
-
-            let cdiff = (c1 as i8) - (c2 as i8);
-            let mut mincount = cmp::min(c1, c2);
-
-            while mincount > 0 {
-                let label1 = self.raw[ps1 as usize];
-                let label2 = other.raw[ps2 as usize];
-                let chdiff =
-                    (lower_caes(label1 as usize) as i8) - (lower_caes(label2 as usize) as i8);
-                if chdiff != 0 {
-                    return NameComparisonResult {
-                        order: chdiff,
-                        common_label_count: nlabels,
-                        relation: if nlabels == 0 {
-                            NameRelation::None
-                        } else {
-                            NameRelation::CommonAncestor
-                        },
-                    };
-                }
-                mincount -= 1;
-                ps1 += 1;
-                ps2 += 1;
-            }
-
-            if cdiff != 0 {
-                return NameComparisonResult {
-                    order: cdiff,
-                    common_label_count: nlabels,
-                    relation: if nlabels == 0 {
-                        NameRelation::None
-                    } else {
-                        NameRelation::CommonAncestor
-                    },
-                };
-            }
-            nlabels += 1;
-        }
-
-        NameComparisonResult {
-            order: ldiff,
-            common_label_count: nlabels,
-            relation: if ldiff < 0 {
-                NameRelation::SuperDomain
-            } else if ldiff > 0 {
-                NameRelation::SubDomain
-            } else {
-                NameRelation::Equal
-            },
-        }
+        let ls1 = LabelSequence::new(self);
+        let ls2 = LabelSequence::new(other);
+        ls1.compare(&ls2, false)
     }
 
     pub fn concat_all(&self, suffixes: &[&Name]) -> Result<Name> {
@@ -717,11 +655,11 @@ impl Name {
 
     pub fn is_wildcard(&self) -> bool {
         if self.raw.len() < 3 {
-            return false;
+            false
         } else if self.offsets.len() < 2 || self.offsets[1] != 2 {
-            return false;
+            false
         } else {
-            return self.raw[0] == 1 && self.raw[1] == b'*';
+            self.raw[0] == 1 && self.raw[1] == b'*'
         }
     }
 

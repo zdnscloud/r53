@@ -22,7 +22,7 @@ impl<'a> LabelSequence<'a> {
     }
 
     pub fn get_data(&self) -> &'a [u8] {
-        let first_label_index: usize = usize::from(self.offsets[usize::from(self.first_label)]);
+        let first_label_index: usize = usize::from(self.offsets[self.first_label]);
         &self.data[first_label_index..]
     }
 
