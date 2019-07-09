@@ -1,7 +1,8 @@
 use crate::error::DNSError;
 use crate::message_render::MessageRender;
 use crate::util::{InputBuffer, OutputBuffer};
-use failure::Result;
+use core::convert::TryFrom;
+use failure::{self, Result};
 use std::cmp;
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -653,15 +654,6 @@ impl Name {
         self
     }
 
-    pub fn clone(&self) -> Name {
-        Name {
-            length: self.length,
-            label_count: self.label_count,
-            raw: self.raw.clone(),
-            offsets: self.offsets.clone(),
-        }
-    }
-
     pub fn strip_right(&self, label_count: usize) -> Name {
         assert!(label_count < self.label_count as usize);
 
@@ -723,12 +715,33 @@ impl Name {
         true
     }
 
+    pub fn is_wildcard(&self) -> bool {
+        if self.raw.len() < 3 {
+            return false;
+        } else if self.offsets.len() < 2 || self.offsets[1] != 2 {
+            return false;
+        } else {
+            return self.raw[0] == 1 && self.raw[1] == b'*';
+        }
+    }
+
+    pub fn is_root(&self) -> bool {
+        self.raw.len() == 1 && self.raw[0] == 0
+    }
+
     pub fn raw_data(&self) -> &[u8] {
         self.raw.as_slice()
     }
 
     pub fn offsets(&self) -> &[u8] {
         self.offsets.as_slice()
+    }
+}
+
+impl TryFrom<&str> for Name {
+    type Error = failure::Error;
+    fn try_from(s: &str) -> core::result::Result<Self, Self::Error> {
+        Name::new(s)
     }
 }
 
@@ -949,5 +962,35 @@ mod test {
                 && root.is_subdomain(&cn) == false
                 && www_knet.is_subdomain(&www_knet_cn) == false
         );
+    }
+
+    #[test]
+    fn test_is_wildcard() {
+        let wildcard_names = vec!["*", "*.a", "*.*.a"];
+        let not_wildcard_names = vec!["a.*", "a.*.a", "a.*.*.a"];
+        for name_str in wildcard_names {
+            let name = Name::new(name_str).unwrap();
+            assert!(name.is_wildcard());
+        }
+        for name_str in not_wildcard_names {
+            let name = Name::new(name_str).unwrap();
+            assert!(name.is_wildcard() == false);
+        }
+    }
+
+    #[test]
+    fn test_is_root() {
+        let root_names = vec!["."];
+        let not_root_names = vec!["a", "a.a"];
+        for name_str in root_names {
+            let name = Name::new(name_str).unwrap();
+            assert!(name.is_root());
+        }
+        for name_str in not_root_names {
+            let name = Name::new(name_str).unwrap();
+            assert!(name.is_root() == false);
+        }
+        let name = Name::new("a.a.a").unwrap();
+        assert!(name.parent(3).unwrap().is_root());
     }
 }

@@ -207,13 +207,9 @@ mod test {
     use crate::name::Name;
     use crate::opcode::Opcode;
     use crate::rcode::Rcode;
-    use crate::rdata::RData;
-    use crate::rdata_a::A;
-    use crate::rdata_ns::NS;
-    use crate::rr_class::RRClass;
     use crate::rr_type::RRType;
-    use crate::rrset::RRTtl;
     use crate::util::hex::from_hex;
+    use core::convert::TryFrom;
 
     fn build_desired_message() -> Message {
         let mut msg = Message::with_query(Name::new("test.example.com.").unwrap(), RRType::A);
@@ -226,34 +222,10 @@ mod test {
                 .set_flag(HeaderFlag::QueryRespone)
                 .set_flag(HeaderFlag::AuthAnswer)
                 .set_flag(HeaderFlag::RecursionDesired)
-                .add_answer(RRset {
-                    name: Name::new("test.example.com.").unwrap(),
-                    typ: RRType::A,
-                    class: RRClass::IN,
-                    ttl: RRTtl(3600),
-                    rdatas: [
-                        RData::A(A::from_string("192.0.2.2").unwrap()),
-                        RData::A(A::from_string("192.0.2.1").unwrap()),
-                    ]
-                    .to_vec(),
-                })
-                .add_auth(RRset {
-                    name: Name::new("example.com.").unwrap(),
-                    typ: RRType::NS,
-                    class: RRClass::IN,
-                    ttl: RRTtl(3600),
-                    rdatas: [RData::NS(Box::new(
-                        NS::from_string("ns1.example.com.").unwrap(),
-                    ))]
-                    .to_vec(),
-                })
-                .add_additional(RRset {
-                    name: Name::new("ns1.example.com.").unwrap(),
-                    typ: RRType::A,
-                    class: RRClass::IN,
-                    ttl: RRTtl(3600),
-                    rdatas: [RData::A(A::from_string("2.2.2.2").unwrap())].to_vec(),
-                })
+                .add_answer(RRset::try_from("test.example.com. 3600 IN A 192.0.2.2").unwrap())
+                .add_answer(RRset::try_from("test.example.com. 3600 IN A 192.0.2.1").unwrap())
+                .add_auth(RRset::try_from("example.com. 3600 IN NS ns1.example.com.").unwrap())
+                .add_additional(RRset::try_from("ns1.example.com. 3600 IN A 2.2.2.2").unwrap())
                 .edns(Edns {
                     versoin: 0,
                     extened_rcode: 0,

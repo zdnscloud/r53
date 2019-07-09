@@ -1,5 +1,7 @@
+use crate::error::DNSError;
 use crate::message_render::MessageRender;
 use crate::util::{InputBuffer, OutputBuffer};
+use core::convert::TryFrom;
 use failure::Result;
 use std::fmt;
 
@@ -37,7 +39,7 @@ impl RRClass {
         }
     }
 
-    fn to_string(self) -> &'static str {
+    pub fn to_str(self) -> &'static str {
         match self {
             RRClass::IN => "IN",
             RRClass::CH => "CH",
@@ -61,9 +63,23 @@ impl RRClass {
     }
 }
 
+impl TryFrom<&str> for RRClass {
+    type Error = failure::Error;
+    fn try_from(s: &str) -> core::result::Result<Self, Self::Error> {
+        match s.to_uppercase().as_ref() {
+            "IN" => Ok(RRClass::IN),
+            "CH" => Ok(RRClass::CH),
+            "HS" => Ok(RRClass::HS),
+            "NONE" => Ok(RRClass::NONE),
+            "ANY" => Ok(RRClass::ANY),
+            _ => Err(DNSError::InvalidClassString.into()),
+        }
+    }
+}
+
 impl fmt::Display for RRClass {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(&self.to_string())
+        f.write_str(self.to_str())
     }
 }
 
@@ -74,6 +90,6 @@ mod test {
     #[test]
     pub fn test_rrclass_equal() {
         assert_eq!(RRClass::IN.to_u16(), 1);
-        assert_eq!(RRClass::IN.to_string(), "IN");
+        assert_eq!(RRClass::IN.to_str(), "IN");
     }
 }

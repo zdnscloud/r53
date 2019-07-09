@@ -1,15 +1,17 @@
+use crate::error::DNSError;
 use crate::message_render::MessageRender;
 use crate::name::Name;
+use crate::rdata_field::{name_field_from_iter, u16_field_from_iter};
 use crate::util::{InputBuffer, OutputBuffer};
 use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NAPTR {
-    order: u16,
-    preference: u16,
-    flags: u16,
-    services: u16,
-    replacement: Name,
+    pub order: u16,
+    pub preference: u16,
+    pub flags: u16,
+    pub services: u16,
+    pub replacement: Name,
 }
 
 impl NAPTR {
@@ -53,6 +55,31 @@ impl NAPTR {
             self.replacement.to_string(),
         ]
         .join(" ")
+    }
+
+    pub fn from_string<'a>(rdata_str: &mut impl Iterator<Item = &'a str>) -> Result<Self> {
+        match u16_field_from_iter("order", rdata_str) {
+            Err(e) => Err(DNSError::InvalidRdataString("NAPTR", e).into()),
+            Ok(order) => match u16_field_from_iter("preference", rdata_str) {
+                Err(e) => Err(DNSError::InvalidRdataString("NAPTR", e).into()),
+                Ok(preference) => match u16_field_from_iter("flags", rdata_str) {
+                    Err(e) => Err(DNSError::InvalidRdataString("NAPTR", e).into()),
+                    Ok(flags) => match u16_field_from_iter("services", rdata_str) {
+                        Err(e) => Err(DNSError::InvalidRdataString("NAPTR", e).into()),
+                        Ok(services) => match name_field_from_iter("replacement", rdata_str) {
+                            Err(e) => Err(DNSError::InvalidRdataString("NAPTR", e).into()),
+                            Ok(replacement) => Ok(NAPTR {
+                                order,
+                                preference,
+                                flags,
+                                services,
+                                replacement,
+                            }),
+                        },
+                    },
+                },
+            },
+        }
     }
 }
 

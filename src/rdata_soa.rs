@@ -1,17 +1,19 @@
+use crate::error::DNSError;
 use crate::message_render::MessageRender;
 use crate::name::Name;
+use crate::rdata_field::{name_field_from_iter, u32_field_from_iter};
 use crate::util::{InputBuffer, OutputBuffer};
 use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SOA {
-    mname: Name,
-    rname: Name,
-    serial: u32,
-    refresh: u32,
-    retry: u32,
-    expire: u32,
-    minimum: u32,
+    pub mname: Name,
+    pub rname: Name,
+    pub serial: u32,
+    pub refresh: u32,
+    pub retry: u32,
+    pub expire: u32,
+    pub minimum: u32,
 }
 
 impl SOA {
@@ -65,6 +67,39 @@ impl SOA {
             self.minimum.to_string(),
         ]
         .join(" ")
+    }
+
+    pub fn from_string<'a>(rdata_str: &mut impl Iterator<Item = &'a str>) -> Result<Self> {
+        match name_field_from_iter("mname", rdata_str) {
+            Err(e) => Err(DNSError::InvalidRdataString("SOA", e).into()),
+            Ok(mname) => match name_field_from_iter("rname", rdata_str) {
+                Err(e) => Err(DNSError::InvalidRdataString("SOA", e).into()),
+                Ok(rname) => match u32_field_from_iter("serial", rdata_str) {
+                    Err(e) => Err(DNSError::InvalidRdataString("SOA", e).into()),
+                    Ok(serial) => match u32_field_from_iter("refresh", rdata_str) {
+                        Err(e) => Err(DNSError::InvalidRdataString("SOA", e).into()),
+                        Ok(refresh) => match u32_field_from_iter("retry", rdata_str) {
+                            Err(e) => Err(DNSError::InvalidRdataString("SOA", e).into()),
+                            Ok(retry) => match u32_field_from_iter("expire", rdata_str) {
+                                Err(e) => Err(DNSError::InvalidRdataString("SOA", e).into()),
+                                Ok(expire) => match u32_field_from_iter("minimum", rdata_str) {
+                                    Err(e) => Err(DNSError::InvalidRdataString("SOA", e).into()),
+                                    Ok(minimum) => Ok(SOA {
+                                        mname,
+                                        rname,
+                                        serial,
+                                        refresh,
+                                        retry,
+                                        expire,
+                                        minimum,
+                                    }),
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        }
     }
 }
 

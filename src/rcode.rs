@@ -51,7 +51,7 @@ impl Rcode {
         }
     }
 
-    fn to_string(self) -> &'static str {
+    pub fn to_str(self) -> &'static str {
         match self {
             Rcode::NoError => "NOERROR",
             Rcode::FormErr => "FORMERR",
@@ -71,7 +71,7 @@ impl Rcode {
 
 impl fmt::Display for Rcode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(&self.to_string())
+        f.write_str(self.to_str())
     }
 }
 

@@ -1,11 +1,13 @@
+use crate::error::DNSError;
 use crate::message_render::MessageRender;
+use crate::rdata_field::ipv6_field_from_iter;
 use crate::util::{InputBuffer, OutputBuffer};
 use failure::Result;
 use std::net::Ipv6Addr;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AAAA {
-    host: Ipv6Addr,
+    pub host: Ipv6Addr,
 }
 
 fn get_ipv6_addr(buf: &mut InputBuffer) -> Result<Ipv6Addr> {
@@ -19,6 +21,13 @@ fn get_ipv6_addr(buf: &mut InputBuffer) -> Result<Ipv6Addr> {
 impl AAAA {
     pub fn from_wire(buf: &mut InputBuffer, _len: u16) -> Result<Self> {
         get_ipv6_addr(buf).map(|addr| AAAA { host: addr })
+    }
+
+    pub fn from_string<'a>(rdata_str: &mut impl Iterator<Item = &'a str>) -> Result<Self> {
+        match ipv6_field_from_iter("host", rdata_str) {
+            Err(e) => Err(DNSError::InvalidRdataString("AAAA", e).into()),
+            Ok(ip) => Ok(AAAA { host: ip }),
+        }
     }
 
     pub fn rend(&self, render: &mut MessageRender) {
