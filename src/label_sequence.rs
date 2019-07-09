@@ -1,7 +1,7 @@
 use crate::name::Name;
 use crate::name::NameComparisonResult;
 use crate::name::NameRelation;
-use failure::Result;
+use std::cmp;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct LabelSequence<'a> {
@@ -12,13 +12,13 @@ pub struct LabelSequence<'a> {
 }
 
 impl<'a> LabelSequence<'a> {
-    pub fn new(name: &'a Name) -> Result<LabelSequence> {
-        Ok(LabelSequence {
+    pub fn new(name: &'a Name) -> LabelSequence {
+        LabelSequence {
             data: &name.raw,
             offsets: &name.offsets,
             first_label: 0,
             last_label: usize::from(name.label_count - 1),
-        })
+        }
     }
 
     pub fn get_data(&self) -> &'a [u8] {
@@ -55,10 +55,10 @@ impl<'a> LabelSequence<'a> {
         let mut nlabels: usize = 0;
         let mut l1: usize = self.get_label_count();
         let mut l2: usize = other.get_label_count();
-        let mut ldiff = (l1 as isize) - (l2 as isize);
-        let mut l = if (ldiff < 0) { l1 } else { l2 };
+        let ldiff = (l1 as isize) - (l2 as isize);
+        let mut l = cmp::min(l1, l2);
 
-        while (l > 0) {
+        while l > 0 {
             l -= 1;
             l1 -= 1;
             l2 -= 1;
@@ -68,10 +68,10 @@ impl<'a> LabelSequence<'a> {
             let count2: usize = usize::from(other.data[pos2]);
             pos1 += 1;
             pos2 += 1;
-            let mut cdiff: isize = (count1 as isize) - (count2 as isize);
-            let mut count = if (cdiff < 0) { count1 } else { count2 };
+            let cdiff: isize = (count1 as isize) - (count2 as isize);
+            let mut count = cmp::min(count1, count2);
 
-            while (count > 0) {
+            while count > 0 {
                 let label1: u8 = self.data[pos1];
                 let label2: u8 = other.data[pos2];
                 let mut chdiff: bool = true;
@@ -143,7 +143,7 @@ mod test {
     fn test_label_sequence_new() {
         //0377777705626169647503636f6d00
         let n1 = Name::new("www.baidu.com.").unwrap();
-        let ls1 = LabelSequence::new(&n1).unwrap();
+        let ls1 = LabelSequence::new(&n1);
         assert_eq!(
             ls1.data,
             [3, 119, 119, 119, 5, 98, 97, 105, 100, 117, 3, 99, 111, 109, 0]
@@ -153,7 +153,7 @@ mod test {
         assert_eq!(ls1.last_label, 3);
 
         let n2 = Name::new("www.baidu.coM.").unwrap();
-        let ls2 = LabelSequence::new(&n2).unwrap();
+        let ls2 = LabelSequence::new(&n2);
         assert_eq!(
             ls2.data,
             [3, 119, 119, 119, 5, 98, 97, 105, 100, 117, 3, 99, 111, 77, 0]
@@ -173,15 +173,15 @@ mod test {
         assert_eq!(ls1.equals(&ls2, false), true);
         assert_eq!(ls1.equals(&ls2, true), false);
         let grand_parent = Name::new("com").unwrap();
-        let ls_grand_parent = LabelSequence::new(&grand_parent).unwrap();
+        let ls_grand_parent = LabelSequence::new(&grand_parent);
         let parent = Name::new("BaIdU.CoM").unwrap();
-        let ls_parent = LabelSequence::new(&parent).unwrap();
+        let ls_parent = LabelSequence::new(&parent);
         let child = Name::new("wWw.bAiDu.cOm").unwrap();
-        let mut ls_child = LabelSequence::new(&child).unwrap();
+        let mut ls_child = LabelSequence::new(&child);
         let brother = Name::new("AaA.bAiDu.cOm").unwrap();
-        let ls_brother = LabelSequence::new(&brother).unwrap();
+        let ls_brother = LabelSequence::new(&brother);
         let other = Name::new("aAa.BaIdu.cN").unwrap();
-        let mut ls_other = LabelSequence::new(&other).unwrap();
+        let mut ls_other = LabelSequence::new(&other);
         assert_eq!(
             ls_grand_parent.compare(&ls_parent, false).relation,
             NameRelation::SuperDomain
