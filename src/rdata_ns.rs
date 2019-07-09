@@ -1,5 +1,7 @@
+use crate::error::DNSError;
 use crate::message_render::MessageRender;
 use crate::name::Name;
+use crate::rdata_field::name_field_from_iter;
 use crate::util::{InputBuffer, OutputBuffer};
 use failure::Result;
 
@@ -13,9 +15,11 @@ impl NS {
         Name::from_wire(buf).map(|name| NS { name })
     }
 
-    pub fn from_string(name_str: &str) -> Result<Self> {
-        let name = Name::new(name_str)?;
-        Ok(NS { name })
+    pub fn from_string<'a>(rdata_str: &mut impl Iterator<Item = &'a str>) -> Result<Self> {
+        match name_field_from_iter("name", rdata_str) {
+            Err(e) => Err(DNSError::InvalidRdataString("NS", e).into()),
+            Ok(name) => Ok(NS { name }),
+        }
     }
 
     pub fn rend(&self, render: &mut MessageRender) {

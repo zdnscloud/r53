@@ -25,7 +25,7 @@ pub enum RData {
     PTR(Box<rdata_ptr::PTR>),
     MX(Box<rdata_mx::MX>),
     NAPTR(Box<rdata_naptr::NAPTR>),
-    DNAME(Box<rdata_dname::DName>),
+    DName(Box<rdata_dname::DName>),
     OPT(Box<rdata_opt::OPT>),
     SRV(Box<rdata_srv::SRV>),
 }
@@ -47,7 +47,7 @@ impl RData {
                 rdata_naptr::NAPTR::from_wire(buf, len).map(|naptr| RData::NAPTR(Box::new(naptr)))
             }
             RRType::DNAME => {
-                rdata_dname::DName::from_wire(buf, len).map(|dname| RData::DNAME(Box::new(dname)))
+                rdata_dname::DName::from_wire(buf, len).map(|dname| RData::DName(Box::new(dname)))
             }
             RRType::OPT => rdata_opt::OPT::from_wire(buf, len).map(|opt| RData::OPT(Box::new(opt))),
             RRType::SRV => rdata_srv::SRV::from_wire(buf, len).map(|srv| RData::SRV(Box::new(srv))),
@@ -71,7 +71,7 @@ impl RData {
             RData::PTR(ref ptr) => ptr.rend(render),
             RData::MX(ref mx) => mx.rend(render),
             RData::NAPTR(ref naptr) => naptr.rend(render),
-            RData::DNAME(ref dname) => dname.rend(render),
+            RData::DName(ref dname) => dname.rend(render),
             RData::OPT(ref opt) => opt.rend(render),
             RData::SRV(ref srv) => srv.rend(render),
         }
@@ -87,7 +87,7 @@ impl RData {
             RData::PTR(ref ptr) => ptr.to_wire(buf),
             RData::MX(ref mx) => mx.to_wire(buf),
             RData::NAPTR(ref naptr) => naptr.to_wire(buf),
-            RData::DNAME(ref dname) => dname.to_wire(buf),
+            RData::DName(ref dname) => dname.to_wire(buf),
             RData::OPT(ref opt) => opt.to_wire(buf),
             RData::SRV(ref srv) => srv.to_wire(buf),
         }
@@ -103,9 +103,40 @@ impl RData {
             RData::PTR(ref ptr) => ptr.to_string(),
             RData::MX(ref mx) => mx.to_string(),
             RData::NAPTR(ref naptr) => naptr.to_string(),
-            RData::DNAME(ref dname) => dname.to_string(),
+            RData::DName(ref dname) => dname.to_string(),
             RData::OPT(ref opt) => opt.to_string(),
             RData::SRV(ref srv) => srv.to_string(),
+        }
+    }
+
+    pub fn from_string<'a>(
+        typ: RRType,
+        rdata_str: &mut impl Iterator<Item = &'a str>,
+    ) -> Result<Self> {
+        match typ {
+            RRType::A => rdata_a::A::from_string(rdata_str).map(RData::A),
+            RRType::AAAA => rdata_aaaa::AAAA::from_string(rdata_str).map(RData::AAAA),
+            RRType::NS => rdata_ns::NS::from_string(rdata_str).map(|ns| RData::NS(Box::new(ns))),
+            RRType::CNAME => rdata_cname::CName::from_string(rdata_str)
+                .map(|cname| RData::CName(Box::new(cname))),
+            RRType::SOA => {
+                rdata_soa::SOA::from_string(rdata_str).map(|soa| RData::SOA(Box::new(soa)))
+            }
+            RRType::PTR => {
+                rdata_ptr::PTR::from_string(rdata_str).map(|ptr| RData::PTR(Box::new(ptr)))
+            }
+            RRType::MX => rdata_mx::MX::from_string(rdata_str).map(|mx| RData::MX(Box::new(mx))),
+            RRType::NAPTR => rdata_naptr::NAPTR::from_string(rdata_str)
+                .map(|naptr| RData::NAPTR(Box::new(naptr))),
+            RRType::DNAME => rdata_dname::DName::from_string(rdata_str)
+                .map(|dname| RData::DName(Box::new(dname))),
+            RRType::OPT => {
+                rdata_opt::OPT::from_string(rdata_str).map(|opt| RData::OPT(Box::new(opt)))
+            }
+            RRType::SRV => {
+                rdata_srv::SRV::from_string(rdata_str).map(|srv| RData::SRV(Box::new(srv)))
+            }
+            _ => Err(DNSError::RRTypeIsNotSupport.into()),
         }
     }
 }

@@ -33,7 +33,7 @@ impl Opcode {
         }
     }
 
-    fn to_string(self) -> &'static str {
+    pub fn to_str(self) -> &'static str {
         match self {
             Opcode::Query => "QUERY",
             Opcode::IQuery => "IQUERY",
@@ -47,7 +47,7 @@ impl Opcode {
 
 impl fmt::Display for Opcode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(&self.to_string())
+        f.write_str(self.to_str())
     }
 }
 

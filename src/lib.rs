@@ -14,6 +14,7 @@ pub mod rdata_a;
 pub mod rdata_aaaa;
 pub mod rdata_cname;
 pub mod rdata_dname;
+mod rdata_field;
 pub mod rdata_mx;
 pub mod rdata_naptr;
 pub mod rdata_ns;

@@ -1,5 +1,7 @@
+use crate::error::DNSError;
 use crate::message_render::MessageRender;
 use crate::name::Name;
+use crate::rdata_field::{name_field_from_iter, u16_field_from_iter};
 use crate::util::{InputBuffer, OutputBuffer};
 use failure::Result;
 
@@ -47,6 +49,27 @@ impl SRV {
             self.target.to_string(),
         ]
         .join(" ")
+    }
+
+    pub fn from_string<'a>(rdata_str: &mut impl Iterator<Item = &'a str>) -> Result<Self> {
+        match u16_field_from_iter("priority", rdata_str) {
+            Err(e) => Err(DNSError::InvalidRdataString("SRV", e).into()),
+            Ok(priority) => match u16_field_from_iter("weight", rdata_str) {
+                Err(e) => Err(DNSError::InvalidRdataString("NAPTR", e).into()),
+                Ok(weight) => match u16_field_from_iter("port", rdata_str) {
+                    Err(e) => Err(DNSError::InvalidRdataString("NAPTR", e).into()),
+                    Ok(port) => match name_field_from_iter("target", rdata_str) {
+                        Err(e) => Err(DNSError::InvalidRdataString("NAPTR", e).into()),
+                        Ok(target) => Ok(SRV {
+                            priority,
+                            weight,
+                            port,
+                            target,
+                        }),
+                    },
+                },
+            },
+        }
     }
 }
 

@@ -1,9 +1,9 @@
-use std::net::Ipv4Addr;
-
 use crate::error::DNSError;
 use crate::message_render::MessageRender;
+use crate::rdata_field::ipv4_field_from_iter;
 use crate::util::{InputBuffer, OutputBuffer};
 use failure::Result;
+use std::net::Ipv4Addr;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct A {
@@ -20,10 +20,10 @@ impl A {
         get_ipv4_addr(buf).map(|addr| A { host: addr })
     }
 
-    pub fn from_string(ip_str: &str) -> Result<Self> {
-        match ip_str.parse() {
+    pub fn from_string<'a>(rdata_str: &mut impl Iterator<Item = &'a str>) -> Result<Self> {
+        match ipv4_field_from_iter("host", rdata_str) {
+            Err(e) => Err(DNSError::InvalidRdataString("A", e).into()),
             Ok(ip) => Ok(A { host: ip }),
-            Err(_) => Err(DNSError::InvalidIPv4Address.into()),
         }
     }
 

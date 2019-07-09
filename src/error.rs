@@ -38,9 +38,27 @@ pub enum DNSError {
     #[fail(display = "invalid ipv4 address")]
     InvalidIPv4Address,
 
+    #[fail(display = "invalid ipv6 address")]
+    InvalidIPv6Address,
+
     #[fail(display = "no question is provided")]
     ShortOfQuestion,
 
     #[fail(display = "label index is invalid")]
     InvalidLabelIndex,
+
+    #[fail(display = "string isn't valid rrset")]
+    InvalidRRsetString,
+
+    #[fail(display = "string isn't valid ttl")]
+    InvalidTtlString,
+
+    #[fail(display = "string isn't valid class")]
+    InvalidClassString,
+
+    #[fail(display = "rrtype isn't support yet")]
+    RRTypeIsNotSupport,
+
+    #[fail(display = "rdata with type {} isn't valid {}", _0, _1)]
+    InvalidRdataString(&'static str, String),
 }

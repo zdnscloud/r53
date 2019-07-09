@@ -1,7 +1,8 @@
 use crate::error::DNSError;
 use crate::message_render::MessageRender;
 use crate::util::{InputBuffer, OutputBuffer};
-use failure::Result;
+use core::convert::TryFrom;
+use failure::{self, Result};
 use std::cmp;
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -653,15 +654,6 @@ impl Name {
         self
     }
 
-    pub fn clone(&self) -> Name {
-        Name {
-            length: self.length,
-            label_count: self.label_count,
-            raw: self.raw.clone(),
-            offsets: self.offsets.clone(),
-        }
-    }
-
     pub fn strip_right(&self, label_count: usize) -> Name {
         assert!(label_count < self.label_count as usize);
 
@@ -729,6 +721,13 @@ impl Name {
 
     pub fn offsets(&self) -> &[u8] {
         self.offsets.as_slice()
+    }
+}
+
+impl TryFrom<&str> for Name {
+    type Error = failure::Error;
+    fn try_from(s: &str) -> core::result::Result<Self, Self::Error> {
+        Name::new(s)
     }
 }
 

@@ -1,10 +1,12 @@
+use crate::error::DNSError;
 use crate::message_render::MessageRender;
 use crate::name::Name;
 use crate::rdata::RData;
 use crate::rr_class::RRClass;
 use crate::rr_type::RRType;
 use crate::util::{InputBuffer, OutputBuffer};
-use failure::Result;
+use core::convert::TryFrom;
+use failure::{self, Result};
 use std::fmt::Write;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -25,6 +27,16 @@ impl RRTtl {
 
     fn to_string(self) -> String {
         self.0.to_string()
+    }
+}
+
+impl TryFrom<&str> for RRTtl {
+    type Error = failure::Error;
+    fn try_from(s: &str) -> core::result::Result<Self, Self::Error> {
+        match s.parse::<u32>() {
+            Ok(num) => Ok(RRTtl(num)),
+            Err(_) => Err(DNSError::InvalidTtlString.into()),
+        }
     }
 }
 
@@ -129,10 +141,60 @@ impl RRset {
     }
 }
 
+impl TryFrom<&str> for RRset {
+    type Error = failure::Error;
+    fn try_from(s: &str) -> core::result::Result<Self, Self::Error> {
+        let mut labels = s.trim().split_whitespace();
+
+        let name = if let Some(name_str) = labels.next() {
+            Name::try_from(name_str)?
+        } else {
+            return Err(DNSError::InvalidRRsetString.into());
+        };
+
+        let ttl = if let Some(ttl_str) = labels.next() {
+            RRTtl::try_from(ttl_str)?
+        } else {
+            return Err(DNSError::InvalidRRsetString.into());
+        };
+
+        let mut short_of_class = false;
+        let cls_str = if let Some(cls_str) = labels.next() {
+            cls_str
+        } else {
+            return Err(DNSError::InvalidRRsetString.into());
+        };
+
+        let class = match RRClass::try_from(cls_str) {
+            Ok(cls) => cls,
+            Err(_) => {
+                short_of_class = true;
+                RRClass::IN
+            }
+        };
+
+        let typ = if short_of_class {
+            RRType::try_from(cls_str)?
+        } else if let Some(typ_str) = labels.next() {
+            RRType::try_from(typ_str)?
+        } else {
+            return Err(DNSError::InvalidRRsetString.into());
+        };
+
+        let rdata = RData::from_string(typ, &mut labels)?;
+        Ok(RRset {
+            name,
+            typ,
+            class,
+            ttl,
+            rdatas: vec![rdata],
+        })
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::rdata_a::A;
     use crate::util::hex::from_hex;
 
     #[test]
@@ -141,17 +203,44 @@ mod test {
             from_hex("0474657374076578616d706c6503636f6d000001000100000e100004c0000201").unwrap();
         let mut buf = InputBuffer::new(raw.as_slice());
         let rrset = RRset::from_wire(&mut buf).unwrap();
-        let desired_rrset = RRset {
-            name: Name::new("test.example.com.").unwrap(),
-            typ: RRType::A,
-            class: RRClass::IN,
-            ttl: RRTtl(3600),
-            rdatas: [RData::A(A::from_string("192.0.2.1").unwrap())].to_vec(),
-        };
+        let desired_rrset = RRset::try_from("test.example.com. 3600 IN A 192.0.2.1").unwrap();
         assert_eq!(rrset, desired_rrset);
-
         let mut render = MessageRender::new();
         desired_rrset.rend(&mut render);
         assert_eq!(raw.as_slice(), render.data());
+    }
+
+    #[test]
+    fn test_rrset_from_string() {
+        let rrset_strs = vec![
+            "example.org. 100 IN SOA xxx.net. ns.example.org. 100 1800 900 604800 86400",
+            "example.org. 200 IN NS ns.example.org.",
+            "example.org. 300 IN A 192.0.2.1",
+            "ns.example.org. 400 IN AAAA 2001:db8::2",
+            "cname.example.org. 500 IN CNAME canonical.example.org",
+            "_sip._udp.example.com 600 SRV 5 100 5060 sip-udp01.example.com.",
+            "mydomain.com. 700 IN MX 0 mydomain.com.",
+            "16.3.0.122.in-addr.arpa. 800 IN PTR name.net",
+        ];
+
+        let typs = vec![
+            RRType::SOA,
+            RRType::NS,
+            RRType::A,
+            RRType::AAAA,
+            RRType::CNAME,
+            RRType::SRV,
+            RRType::MX,
+            RRType::PTR,
+        ];
+
+        for (index, rrset_str) in rrset_strs.iter().enumerate() {
+            let rrset = RRset::try_from(*rrset_str).expect("parse rrset failed");
+            assert_eq!(rrset.typ, typs[index]);
+            assert_eq!(
+                rrset.ttl,
+                RRTtl::try_from(format!("{}", (index + 1) * 100).as_ref()).unwrap()
+            );
+        }
     }
 }

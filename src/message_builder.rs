@@ -60,9 +60,13 @@ impl<'a> MessageBuilder<'a> {
         self.add_rrset_to_section(SectionType::Additional, rrset)
     }
 
-    fn add_rrset_to_section(&mut self, section: SectionType, rrset: RRset) -> &mut Self {
+    fn add_rrset_to_section(&mut self, section: SectionType, mut rrset: RRset) -> &mut Self {
         if let Some(ref mut rrsets) = self.msg.sections[section as usize].0 {
-            rrsets.push(rrset);
+            if let Some(index) = rrsets.iter().position(|old| old.is_same_rrset(&rrset)) {
+                rrsets[index].rdatas.append(&mut rrset.rdatas);
+            } else {
+                rrsets.push(rrset);
+            }
         } else {
             self.msg.sections[section as usize] = Section(Some(vec![rrset]));
         }
