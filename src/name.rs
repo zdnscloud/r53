@@ -715,6 +715,20 @@ impl Name {
         true
     }
 
+    pub fn is_wildcard(&self) -> bool {
+        if self.raw.len() < 3 {
+            return false;
+        } else if self.offsets.len() < 2 || self.offsets[1] != 2 {
+            return false;
+        } else {
+            return self.raw[0] == 1 && self.raw[1] == b'*';
+        }
+    }
+
+    pub fn is_root(&self) -> bool {
+        self.raw.len() == 1 && self.raw[0] == 0
+    }
+
     pub fn raw_data(&self) -> &[u8] {
         self.raw.as_slice()
     }
@@ -948,5 +962,35 @@ mod test {
                 && root.is_subdomain(&cn) == false
                 && www_knet.is_subdomain(&www_knet_cn) == false
         );
+    }
+
+    #[test]
+    fn test_is_wildcard() {
+        let wildcard_names = vec!["*", "*.a", "*.*.a"];
+        let not_wildcard_names = vec!["a.*", "a.*.a", "a.*.*.a"];
+        for name_str in wildcard_names {
+            let name = Name::new(name_str).unwrap();
+            assert!(name.is_wildcard());
+        }
+        for name_str in not_wildcard_names {
+            let name = Name::new(name_str).unwrap();
+            assert!(name.is_wildcard() == false);
+        }
+    }
+
+    #[test]
+    fn test_is_root() {
+        let root_names = vec!["."];
+        let not_root_names = vec!["a", "a.a"];
+        for name_str in root_names {
+            let name = Name::new(name_str).unwrap();
+            assert!(name.is_root());
+        }
+        for name_str in not_root_names {
+            let name = Name::new(name_str).unwrap();
+            assert!(name.is_root() == false);
+        }
+        let name = Name::new("a.a.a").unwrap();
+        assert!(name.parent(3).unwrap().is_root());
     }
 }
