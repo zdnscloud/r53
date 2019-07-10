@@ -1,9 +1,8 @@
 use crate::error::DNSError;
 use crate::message_render::MessageRender;
-use crate::name::Name;
-use crate::rdata_field::{name_field_from_iter, u16_field_from_iter};
-use crate::util::{InputBuffer, OutputBuffer};
+use crate::util::{InputBuffer, OutputBuffer, Parser};
 use failure::Result;
+use std::str::from_utf8;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TXT {
@@ -23,8 +22,13 @@ impl TXT {
         Ok(TXT { data })
     }
 
-    pub fn from_string<'a>(rdata_str: &mut impl Iterator<Item = &'a str>) -> Result<Self> {
-        Ok(TXT { data: Vec::new() })
+    pub fn from_string<'a>(parser: &mut Parser<'a>) -> Result<Self> {
+        let data = parser.next_txt();
+        if data.len() == 0 {
+            Err(DNSError::InvalidRdataString("TXT", "empty txt".to_string()).into())
+        } else {
+            Ok(TXT { data })
+        }
     }
 
     pub fn rend(&self, render: &mut MessageRender) {
@@ -42,7 +46,12 @@ impl TXT {
     }
 
     pub fn to_string(&self) -> String {
-        "".to_string()
+        self.data.iter().fold(String::new(), |mut s, data| {
+            s.push_str("\"");
+            s.push_str(from_utf8(data).unwrap());
+            s.push_str("\" ");
+            s
+        })
     }
 }
 

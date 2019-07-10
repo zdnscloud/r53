@@ -28,18 +28,38 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn next_char(&mut self) -> Option<char> {
-        if self.is_eos() {
-            None
+    pub fn next_txt(&mut self) -> Vec<Vec<u8>> {
+        self.skip_whitespace();
+        let mut data = Vec::new();
+        if self.raw[self.pos] == b'"' {
+            let mut last_pos = self.pos + 1;
+            let mut in_quote = true;
+            let mut start_escape = false;
+            self.pos += 1;
+            while self.is_eos() == false {
+                let c = self.raw[self.pos];
+                if c == b'\\' {
+                    start_escape = true;
+                } else {
+                    if c == b'"' && start_escape == false {
+                        if in_quote {
+                            data.push(self.raw[last_pos..self.pos].to_vec());
+                            in_quote = false;
+                        } else {
+                            in_quote = true;
+                            last_pos = self.pos + 1;
+                        }
+                    }
+                    start_escape = false;
+                }
+                self.pos += 1;
+            }
         } else {
-            Some(self.unsafe_next_char())
+            while let Some(s) = self.next_string() {
+                data.push(s.as_bytes().to_vec());
+            }
         }
-    }
-
-    fn unsafe_next_char(&mut self) -> char {
-        let c = self.raw[self.pos];
-        self.pos += 1;
-        c as char
+        data
     }
 
     pub fn next_string(&mut self) -> Option<&'a str> {
@@ -62,7 +82,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn into_str(self) -> Option<&'a str> {
+    pub fn into_str(self) -> Option<&'a str> {
         if self.is_eos() {
             None
         } else {
@@ -112,5 +132,25 @@ mod test {
             iter.into_str().unwrap(),
             " IN SOA xxx.net. ns.example.org. 100 1800 900 604800 86400    "
         );
+    }
+
+    #[test]
+    fn test_next_txt() {
+        let s = " abc edf";
+        let data = Parser::new(s).next_txt();
+        assert_eq!(data.len(), 2);
+        assert_eq!(data[0], "abc".as_bytes().to_vec());
+        assert_eq!(data[1], "edf".as_bytes().to_vec());
+
+        let s = " \"abc edf\"";
+        let data = Parser::new(s).next_txt();
+        assert_eq!(data.len(), 1);
+        assert_eq!(data[0], "abc edf".as_bytes().to_vec());
+
+        let s = " \"abc\\\"c\" \"edf\"";
+        let data = Parser::new(s).next_txt();
+        assert_eq!(data.len(), 2);
+        assert_eq!(data[0], "abc\\\"c".as_bytes().to_vec());
+        assert_eq!(data[1], "edf".as_bytes().to_vec());
     }
 }

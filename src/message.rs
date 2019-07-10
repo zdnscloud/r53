@@ -241,9 +241,7 @@ mod test {
     #[test]
     fn test_message_to_wire() {
         let raw =
-            from_hex("04b0850000010002000100020474657374076578616d706c6503636f6d0000010001c00c0001000100000e10000
-                     4c0000202c00c0001000100000e100004c0000201c0110002000100000e100006036e7331c011c04e0001000100000e100004020202020000
-                     291000000000000000").unwrap();
+            from_hex("04b0850000010002000100020474657374076578616d706c6503636f6d0000010001c00c0001000100000e100004c0000202c00c0001000100000e100004c0000201c0110002000100000e100006036e7331c011c04e0001000100000e100004020202020000291000000000000000").unwrap();
         let message = Message::from_wire(raw.as_slice()).unwrap();
         let desired_message = build_desired_message();
         assert_eq!(message, desired_message);
@@ -251,5 +249,21 @@ mod test {
         let mut render = MessageRender::new();
         desired_message.rend(&mut render);
         assert_eq!(raw.as_slice(), render.data());
+
+        let raw =
+            from_hex("04b08500000100010001000103656565066e69757a756f036f72670000100001c00c0010000100000e10001302446f03796f750477616e7402746f03646965c0100002000100000e10001404636e7331097a646e73636c6f7564036e6574000000291000000000000000").unwrap();
+        let message = Message::from_wire(raw.as_slice()).unwrap();
+        println!("msg:{}", message.to_string());
+        let mut render = MessageRender::new();
+        message.rend(&mut render);
+        assert_eq!(raw.as_slice(), render.data());
+        assert_eq!(
+            message.sections[SectionType::Answer as usize]
+                .0
+                .as_ref()
+                .unwrap()[0],
+            RRset::try_from("eee.niuzuo.org.	3600	IN	TXT	\"Do\" \"you\" \"want\" \"to\" \"die\"")
+                .unwrap()
+        );
     }
 }

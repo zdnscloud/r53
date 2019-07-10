@@ -11,6 +11,7 @@ use crate::rdata_opt;
 use crate::rdata_ptr;
 use crate::rdata_soa;
 use crate::rdata_srv;
+use crate::rdata_txt;
 use crate::rr_type::RRType;
 use crate::util::{InputBuffer, OutputBuffer, Parser};
 use failure::Result;
@@ -28,6 +29,7 @@ pub enum RData {
     DName(Box<rdata_dname::DName>),
     OPT(Box<rdata_opt::OPT>),
     SRV(Box<rdata_srv::SRV>),
+    TXT(Box<rdata_txt::TXT>),
 }
 
 impl RData {
@@ -51,6 +53,7 @@ impl RData {
             }
             RRType::OPT => rdata_opt::OPT::from_wire(buf, len).map(|opt| RData::OPT(Box::new(opt))),
             RRType::SRV => rdata_srv::SRV::from_wire(buf, len).map(|srv| RData::SRV(Box::new(srv))),
+            RRType::TXT => rdata_txt::TXT::from_wire(buf, len).map(|txt| RData::TXT(Box::new(txt))),
             _ => Err(DNSError::UnknownRRType(typ.to_u16()).into()),
         };
 
@@ -74,6 +77,7 @@ impl RData {
             RData::DName(ref dname) => dname.rend(render),
             RData::OPT(ref opt) => opt.rend(render),
             RData::SRV(ref srv) => srv.rend(render),
+            RData::TXT(ref txt) => txt.rend(render),
         }
     }
 
@@ -90,6 +94,7 @@ impl RData {
             RData::DName(ref dname) => dname.to_wire(buf),
             RData::OPT(ref opt) => opt.to_wire(buf),
             RData::SRV(ref srv) => srv.to_wire(buf),
+            RData::TXT(ref txt) => txt.to_wire(buf),
         }
     }
 
@@ -106,6 +111,7 @@ impl RData {
             RData::DName(ref dname) => dname.to_string(),
             RData::OPT(ref opt) => opt.to_string(),
             RData::SRV(ref srv) => srv.to_string(),
+            RData::TXT(ref txt) => txt.to_string(),
         }
     }
 
@@ -132,6 +138,9 @@ impl RData {
             }
             RRType::SRV => {
                 rdata_srv::SRV::from_string(rdata_str).map(|srv| RData::SRV(Box::new(srv)))
+            }
+            RRType::TXT => {
+                rdata_txt::TXT::from_string(rdata_str).map(|txt| RData::TXT(Box::new(txt)))
             }
             _ => Err(DNSError::RRTypeIsNotSupport.into()),
         }
