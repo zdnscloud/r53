@@ -1,5 +1,5 @@
 use crate::error::DNSError;
-use crate::label_sequence::LabelSequence;
+use crate::label_slice::LabelSlice;
 use crate::message_render::MessageRender;
 use crate::util::{InputBuffer, OutputBuffer};
 use core::convert::TryFrom;
@@ -401,8 +401,8 @@ impl Name {
     }
 
     pub fn get_relation(&self, other: &Name) -> NameComparisonResult {
-        let ls1 = LabelSequence::new(self);
-        let ls2 = LabelSequence::new(other);
+        let ls1 = LabelSlice::new(self);
+        let ls2 = LabelSlice::new(other);
         ls1.compare(&ls2, false)
     }
 

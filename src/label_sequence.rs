@@ -1,29 +1,34 @@
+use crate::label_slice::LabelSlice;
 use crate::name::Name;
 use crate::name::NameComparisonResult;
 use crate::name::NameRelation;
 use std::cmp;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct LabelSequence<'a> {
-    data: &'a [u8],
-    offsets: &'a [u8],
+pub struct LabelSequence {
+    data: Vec<u8>,
+    offsets: Vec<u8>,
     first_label: usize,
     last_label: usize,
 }
 
-impl<'a> LabelSequence<'a> {
-    pub fn new(name: &'a Name) -> LabelSequence {
+impl LabelSequence {
+    pub fn new(ls: LabelSlice, name: Name) -> LabelSequence {
         LabelSequence {
-            data: &name.raw,
-            offsets: &name.offsets,
+            data: name.raw,
+            offsets: name.offsets,
             first_label: 0,
             last_label: usize::from(name.label_count - 1),
         }
     }
 
-    pub fn get_data(&self) -> &'a [u8] {
+    pub fn get_data(&self) -> &[u8] {
         let first_label_index: usize = usize::from(self.offsets[self.first_label]);
-        &self.data[first_label_index..]
+        &self.data[first_label_index..self.get_data_length()]
+    }
+
+    pub fn get_offset(&self) -> &[u8] {
+        &self.offsets[0..]
     }
 
     pub fn get_data_length(&self) -> usize {
@@ -42,7 +47,7 @@ impl<'a> LabelSequence<'a> {
         if case_sensitive {
             return data == other_data;
         } else {
-            data.eq_ignore_ascii_case(other_data);
+            data.eq_ignore_ascii_case(&other_data[..]);
         }
         true
     }
@@ -136,87 +141,4 @@ impl<'a> LabelSequence<'a> {
 }
 
 #[cfg(test)]
-mod test {
-    use super::*;
-    use crate::name::Name;
-    #[test]
-    fn test_label_sequence_new() {
-        //0377777705626169647503636f6d00
-        let n1 = Name::new("www.baidu.com.").unwrap();
-        let ls1 = LabelSequence::new(&n1);
-        assert_eq!(
-            ls1.data,
-            [3, 119, 119, 119, 5, 98, 97, 105, 100, 117, 3, 99, 111, 109, 0]
-        );
-        assert_eq!(ls1.offsets, [0, 4, 10, 14]);
-        assert_eq!(ls1.first_label, 0);
-        assert_eq!(ls1.last_label, 3);
-
-        let n2 = Name::new("www.baidu.coM.").unwrap();
-        let ls2 = LabelSequence::new(&n2);
-        assert_eq!(
-            ls2.data,
-            [3, 119, 119, 119, 5, 98, 97, 105, 100, 117, 3, 99, 111, 77, 0]
-        );
-        assert_eq!(ls2.offsets, [0, 4, 10, 14]);
-        assert_eq!(ls2.first_label, 0);
-        assert_eq!(ls2.last_label, 3);
-
-        assert_eq!(
-            ls1.get_data(),
-            [3, 119, 119, 119, 5, 98, 97, 105, 100, 117, 3, 99, 111, 109, 0]
-        );
-        assert_eq!(
-            ls2.get_data(),
-            [3, 119, 119, 119, 5, 98, 97, 105, 100, 117, 3, 99, 111, 77, 0]
-        );
-        assert_eq!(ls1.equals(&ls2, false), true);
-        assert_eq!(ls1.equals(&ls2, true), false);
-        let grand_parent = Name::new("com").unwrap();
-        let ls_grand_parent = LabelSequence::new(&grand_parent);
-        let parent = Name::new("BaIdU.CoM").unwrap();
-        let ls_parent = LabelSequence::new(&parent);
-        let child = Name::new("wWw.bAiDu.cOm").unwrap();
-        let mut ls_child = LabelSequence::new(&child);
-        let brother = Name::new("AaA.bAiDu.cOm").unwrap();
-        let ls_brother = LabelSequence::new(&brother);
-        let other = Name::new("aAa.BaIdu.cN").unwrap();
-        let mut ls_other = LabelSequence::new(&other);
-        assert_eq!(
-            ls_grand_parent.compare(&ls_parent, false).relation,
-            NameRelation::SuperDomain
-        );
-        assert_eq!(
-            ls_parent.compare(&ls_child, false).relation,
-            NameRelation::SuperDomain
-        );
-        assert_eq!(
-            ls_child.compare(&ls_parent, false).relation,
-            NameRelation::SubDomain
-        );
-        assert_eq!(
-            ls_child.compare(&ls_grand_parent, false).relation,
-            NameRelation::SubDomain
-        );
-        assert_eq!(
-            ls_child.compare(&ls_brother, false).relation,
-            NameRelation::CommonAncestor
-        );
-        assert_eq!(
-            ls_child.compare(&ls_child, false).relation,
-            NameRelation::Equal
-        );
-        ls_child.strip_left(1);
-        ls_other.strip_left(1);
-        assert_eq!(
-            ls_child.compare(&ls_other, false).relation,
-            NameRelation::CommonAncestor
-        );
-        ls_child.strip_right(1);
-        ls_other.strip_right(1);
-        assert_eq!(
-            ls_child.compare(&ls_other, false).relation,
-            NameRelation::None
-        );
-    }
-}
+mod test {}
