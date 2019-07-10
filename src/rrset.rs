@@ -4,7 +4,7 @@ use crate::name::Name;
 use crate::rdata::RData;
 use crate::rr_class::RRClass;
 use crate::rr_type::RRType;
-use crate::util::{InputBuffer, OutputBuffer};
+use crate::util::{InputBuffer, OutputBuffer, Parser};
 use core::convert::TryFrom;
 use failure::{self, Result};
 use std::fmt::Write;
@@ -144,7 +144,7 @@ impl RRset {
 impl TryFrom<&str> for RRset {
     type Error = failure::Error;
     fn try_from(s: &str) -> core::result::Result<Self, Self::Error> {
-        let mut labels = s.trim().split_whitespace();
+        let mut labels = Parser::new(s.trim()); //.split_whitespace();
 
         let name = if let Some(name_str) = labels.next() {
             Name::try_from(name_str)?

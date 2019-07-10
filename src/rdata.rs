@@ -12,7 +12,7 @@ use crate::rdata_ptr;
 use crate::rdata_soa;
 use crate::rdata_srv;
 use crate::rr_type::RRType;
-use crate::util::{InputBuffer, OutputBuffer};
+use crate::util::{InputBuffer, OutputBuffer, Parser};
 use failure::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -109,10 +109,7 @@ impl RData {
         }
     }
 
-    pub fn from_string<'a>(
-        typ: RRType,
-        rdata_str: &mut impl Iterator<Item = &'a str>,
-    ) -> Result<Self> {
+    pub fn from_string<'a>(typ: RRType, rdata_str: &mut Parser<'a>) -> Result<Self> {
         match typ {
             RRType::A => rdata_a::A::from_string(rdata_str).map(RData::A),
             RRType::AAAA => rdata_aaaa::AAAA::from_string(rdata_str).map(RData::AAAA),

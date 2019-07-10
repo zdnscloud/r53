@@ -23,6 +23,7 @@ pub mod rdata_opt;
 pub mod rdata_ptr;
 pub mod rdata_soa;
 pub mod rdata_srv;
+pub mod rdata_txt;
 pub mod rr_class;
 pub mod rr_type;
 pub mod rrset;
