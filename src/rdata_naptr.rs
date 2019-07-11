@@ -1,7 +1,6 @@
-use crate::error::DNSError;
 use crate::message_render::MessageRender;
 use crate::name::Name;
-use crate::rdata_field::{name_field_from_iter, u16_field_from_iter};
+use crate::rdatafield_string_parser::Parser;
 use crate::util::{InputBuffer, OutputBuffer};
 use failure::Result;
 
@@ -57,29 +56,19 @@ impl NAPTR {
         .join(" ")
     }
 
-    pub fn from_string<'a>(rdata_str: &mut impl Iterator<Item = &'a str>) -> Result<Self> {
-        match u16_field_from_iter("order", rdata_str) {
-            Err(e) => Err(DNSError::InvalidRdataString("NAPTR", e).into()),
-            Ok(order) => match u16_field_from_iter("preference", rdata_str) {
-                Err(e) => Err(DNSError::InvalidRdataString("NAPTR", e).into()),
-                Ok(preference) => match u16_field_from_iter("flags", rdata_str) {
-                    Err(e) => Err(DNSError::InvalidRdataString("NAPTR", e).into()),
-                    Ok(flags) => match u16_field_from_iter("services", rdata_str) {
-                        Err(e) => Err(DNSError::InvalidRdataString("NAPTR", e).into()),
-                        Ok(services) => match name_field_from_iter("replacement", rdata_str) {
-                            Err(e) => Err(DNSError::InvalidRdataString("NAPTR", e).into()),
-                            Ok(replacement) => Ok(NAPTR {
-                                order,
-                                preference,
-                                flags,
-                                services,
-                                replacement,
-                            }),
-                        },
-                    },
-                },
-            },
-        }
+    pub fn from_str<'a>(iter: &mut Parser<'a>) -> Result<Self> {
+        let order = iter.next_field::<u16>("NAPTR", "order")?;
+        let preference = iter.next_field::<u16>("NAPTR", "preference")?;
+        let flags = iter.next_field::<u16>("NAPTR", "flags")?;
+        let services = iter.next_field::<u16>("NAPTR", "services")?;
+        let replacement = iter.next_field::<Name>("NAPTR", "replacement")?;
+        Ok(NAPTR {
+            order,
+            preference,
+            flags,
+            services,
+            replacement,
+        })
     }
 }
 
