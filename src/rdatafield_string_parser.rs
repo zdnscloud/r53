@@ -1,4 +1,8 @@
+use crate::error::DNSError;
+use crate::util::hex::from_hex;
+use failure::Result;
 use std::str::from_utf8;
+use std::str::FromStr;
 
 pub struct Parser<'a> {
     raw: &'a [u8],
@@ -28,7 +32,20 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn next_txt(&mut self) -> Vec<Vec<u8>> {
+    pub fn next_hex(&mut self, rr_type: &'static str, field_name: &'static str) -> Result<Vec<u8>> {
+        if let Some(s) = self.next_string() {
+            if let Some(d) = from_hex(s) {
+                return Ok(d);
+            }
+        }
+        Err(DNSError::InvalidRdataString(rr_type, field_name, "empty".to_string()).into())
+    }
+
+    pub fn next_txt(
+        &mut self,
+        rr_type: &'static str,
+        field_name: &'static str,
+    ) -> Result<Vec<Vec<u8>>> {
         self.skip_whitespace();
         let mut data = Vec::new();
         if self.raw[self.pos] == b'"' {
@@ -43,7 +60,9 @@ impl<'a> Parser<'a> {
                 } else {
                     if c == b'"' && start_escape == false {
                         if in_quote {
-                            data.push(self.raw[last_pos..self.pos].to_vec());
+                            if self.pos > last_pos {
+                                data.push(self.raw[last_pos..self.pos].to_vec());
+                            }
                             in_quote = false;
                         } else {
                             in_quote = true;
@@ -54,12 +73,43 @@ impl<'a> Parser<'a> {
                 }
                 self.pos += 1;
             }
+
+            if in_quote {
+                return Err(DNSError::InvalidRdataString(
+                    rr_type,
+                    field_name,
+                    "quote in txt isn't in pair".to_string(),
+                )
+                .into());
+            }
         } else {
             while let Some(s) = self.next_string() {
                 data.push(s.as_bytes().to_vec());
             }
         }
-        data
+
+        if data.is_empty() {
+            Err(DNSError::InvalidRdataString(rr_type, field_name, "empty".to_string()).into())
+        } else {
+            Ok(data)
+        }
+    }
+
+    pub fn next_field<T>(&mut self, rr_type: &'static str, field_name: &'static str) -> Result<T>
+    where
+        T: FromStr,
+        <T as std::str::FromStr>::Err: ToString,
+    {
+        if let Some(s) = self.next_string() {
+            match s.parse::<T>() {
+                Err(e) => {
+                    Err(DNSError::InvalidRdataString(rr_type, field_name, e.to_string()).into())
+                }
+                Ok(v) => Ok(v),
+            }
+        } else {
+            Err(DNSError::InvalidRdataString(rr_type, field_name, "empty".to_string()).into())
+        }
     }
 
     pub fn next_string(&mut self) -> Option<&'a str> {
@@ -137,18 +187,18 @@ mod test {
     #[test]
     fn test_next_txt() {
         let s = " abc edf";
-        let data = Parser::new(s).next_txt();
+        let data = Parser::new(s).next_txt("", "").unwrap();
         assert_eq!(data.len(), 2);
         assert_eq!(data[0], "abc".as_bytes().to_vec());
         assert_eq!(data[1], "edf".as_bytes().to_vec());
 
         let s = " \"abc edf\"";
-        let data = Parser::new(s).next_txt();
+        let data = Parser::new(s).next_txt("", "").unwrap();
         assert_eq!(data.len(), 1);
         assert_eq!(data[0], "abc edf".as_bytes().to_vec());
 
         let s = " \"abc\\\"c\" \"edf\"";
-        let data = Parser::new(s).next_txt();
+        let data = Parser::new(s).next_txt("", "").unwrap();
         assert_eq!(data.len(), 2);
         assert_eq!(data[0], "abc\\\"c".as_bytes().to_vec());
         assert_eq!(data[1], "edf".as_bytes().to_vec());

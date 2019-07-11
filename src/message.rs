@@ -209,7 +209,7 @@ mod test {
     use crate::rcode::Rcode;
     use crate::rr_type::RRType;
     use crate::util::hex::from_hex;
-    use core::convert::TryFrom;
+    use std::str::FromStr;
 
     fn build_desired_message() -> Message {
         let mut msg = Message::with_query(Name::new("test.example.com.").unwrap(), RRType::A);
@@ -222,10 +222,10 @@ mod test {
                 .set_flag(HeaderFlag::QueryRespone)
                 .set_flag(HeaderFlag::AuthAnswer)
                 .set_flag(HeaderFlag::RecursionDesired)
-                .add_answer(RRset::try_from("test.example.com. 3600 IN A 192.0.2.2").unwrap())
-                .add_answer(RRset::try_from("test.example.com. 3600 IN A 192.0.2.1").unwrap())
-                .add_auth(RRset::try_from("example.com. 3600 IN NS ns1.example.com.").unwrap())
-                .add_additional(RRset::try_from("ns1.example.com. 3600 IN A 2.2.2.2").unwrap())
+                .add_answer(RRset::from_str("test.example.com. 3600 IN A 192.0.2.2").unwrap())
+                .add_answer(RRset::from_str("test.example.com. 3600 IN A 192.0.2.1").unwrap())
+                .add_auth(RRset::from_str("example.com. 3600 IN NS ns1.example.com.").unwrap())
+                .add_additional(RRset::from_str("ns1.example.com. 3600 IN A 2.2.2.2").unwrap())
                 .edns(Edns {
                     versoin: 0,
                     extened_rcode: 0,
@@ -262,7 +262,7 @@ mod test {
                 .0
                 .as_ref()
                 .unwrap()[0],
-            RRset::try_from("eee.niuzuo.org.	3600	IN	TXT	\"Do\" \"you\" \"want\" \"to\" \"die\"")
+            RRset::from_str("eee.niuzuo.org.	3600	IN	TXT	\"Do\" \"you\" \"want\" \"to\" \"die\"")
                 .unwrap()
         );
     }

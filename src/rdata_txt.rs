@@ -1,6 +1,6 @@
-use crate::error::DNSError;
 use crate::message_render::MessageRender;
-use crate::util::{InputBuffer, OutputBuffer, Parser};
+use crate::rdatafield_string_parser::Parser;
+use crate::util::{InputBuffer, OutputBuffer};
 use failure::Result;
 use std::str::from_utf8;
 
@@ -22,13 +22,9 @@ impl TXT {
         Ok(TXT { data })
     }
 
-    pub fn from_string<'a>(parser: &mut Parser<'a>) -> Result<Self> {
-        let data = parser.next_txt();
-        if data.len() == 0 {
-            Err(DNSError::InvalidRdataString("TXT", "empty txt".to_string()).into())
-        } else {
-            Ok(TXT { data })
-        }
+    pub fn from_str<'a>(parser: &mut Parser<'a>) -> Result<Self> {
+        let data = parser.next_txt("TXT", "data")?;
+        Ok(TXT { data })
     }
 
     pub fn rend(&self, render: &mut MessageRender) {

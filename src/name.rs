@@ -2,11 +2,11 @@ use crate::error::DNSError;
 use crate::label_sequence::LabelSequence;
 use crate::message_render::MessageRender;
 use crate::util::{InputBuffer, OutputBuffer};
-use core::convert::TryFrom;
 use failure::{self, Result};
 use std::cmp;
 use std::fmt;
 use std::hash::{Hash, Hasher};
+use std::str::FromStr;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum NameRelation {
@@ -676,9 +676,9 @@ impl Name {
     }
 }
 
-impl TryFrom<&str> for Name {
-    type Error = failure::Error;
-    fn try_from(s: &str) -> core::result::Result<Self, Self::Error> {
+impl FromStr for Name {
+    type Err = failure::Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         Name::new(s)
     }
 }
