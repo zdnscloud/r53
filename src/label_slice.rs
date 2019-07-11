@@ -13,7 +13,7 @@ pub struct LabelSlice<'a> {
 }
 
 impl<'a> LabelSlice<'a> {
-    pub fn new(name: &'a Name) -> LabelSlice {
+    pub fn from_name(name: &'a Name) -> LabelSlice {
         LabelSlice {
             data: name.raw.as_slice(),
             offsets: name.offsets.as_slice(),
@@ -22,7 +22,7 @@ impl<'a> LabelSlice<'a> {
         }
     }
 
-    pub fn new2(ls: &'a LabelSequence) -> LabelSlice {
+    pub fn from_label_sequence(ls: &'a LabelSequence) -> LabelSlice {
         LabelSlice {
             data: ls.get_data(),
             offsets: ls.get_offsets(),
@@ -31,7 +31,7 @@ impl<'a> LabelSlice<'a> {
         }
     }
 
-    pub fn move_to_label_sequence(self) -> LabelSequence {
+    pub fn into_label_sequence(self) -> LabelSequence {
         if self.first_label == 0 {
             LabelSequence::new(self.get_data().to_vec(), self.get_offsets().to_vec())
         } else {
@@ -174,7 +174,7 @@ mod test {
     fn test_label_sequence_new() {
         //0377777705626169647503636f6d00
         let n1 = Name::new("www.baidu.com.").unwrap();
-        let ls1 = LabelSlice::new(&n1);
+        let ls1 = LabelSlice::from_name(&n1);
         assert_eq!(
             ls1.data,
             [3, 119, 119, 119, 5, 98, 97, 105, 100, 117, 3, 99, 111, 109, 0]
@@ -184,7 +184,7 @@ mod test {
         assert_eq!(ls1.last_label, 3);
 
         let n2 = Name::new("www.baidu.coM.").unwrap();
-        let ls2 = LabelSlice::new(&n2);
+        let ls2 = LabelSlice::from_name(&n2);
         assert_eq!(
             ls2.data,
             [3, 119, 119, 119, 5, 98, 97, 105, 100, 117, 3, 99, 111, 77, 0]
@@ -204,15 +204,15 @@ mod test {
         assert_eq!(ls1.equals(&ls2, false), true);
         assert_eq!(ls1.equals(&ls2, true), false);
         let grand_parent = Name::new("com").unwrap();
-        let ls_grand_parent = LabelSlice::new(&grand_parent);
+        let ls_grand_parent = LabelSlice::from_name(&grand_parent);
         let parent = Name::new("BaIdU.CoM").unwrap();
-        let ls_parent = LabelSlice::new(&parent);
+        let ls_parent = LabelSlice::from_name(&parent);
         let child = Name::new("wWw.bAiDu.cOm").unwrap();
-        let mut ls_child = LabelSlice::new(&child);
+        let mut ls_child = LabelSlice::from_name(&child);
         let brother = Name::new("AaA.bAiDu.cOm").unwrap();
-        let ls_brother = LabelSlice::new(&brother);
+        let ls_brother = LabelSlice::from_name(&brother);
         let other = Name::new("aAa.BaIdu.cN").unwrap();
-        let mut ls_other = LabelSlice::new(&other);
+        let mut ls_other = LabelSlice::from_name(&other);
         assert_eq!(
             ls_grand_parent.compare(&ls_parent, false).relation,
             NameRelation::SuperDomain
@@ -250,15 +250,15 @@ mod test {
             NameRelation::None
         );
         let ls_name = Name::new("1.www.google.com").unwrap();
-        let mut ls_slice = LabelSlice::new(&ls_name);
+        let mut ls_slice = LabelSlice::from_name(&ls_name);
 
         ls_slice.strip_left(1);
         ls_slice.strip_right(1);
-        let ls_sequence = ls_slice.move_to_label_sequence();
-        let ls_slice2 = LabelSlice::new2(&ls_sequence);
+        let ls_sequence = ls_slice.into_label_sequence();
+        let ls_slice2 = LabelSlice::from_label_sequence(&ls_sequence);
 
         let ls_name_2 = Name::new("www.google.com.").unwrap();
-        let mut ls_slice3 = LabelSlice::new(&ls_name_2);
+        let mut ls_slice3 = LabelSlice::from_name(&ls_name_2);
         ls_slice3.strip_right(1);
         assert_eq!(
             ls_slice2.compare(&ls_slice3, false).relation,

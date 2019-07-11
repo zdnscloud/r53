@@ -1,3 +1,4 @@
+use crate::error::DNSError;
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct LabelSequence {
     data: Vec<u8>,
@@ -39,6 +40,21 @@ impl LabelSequence {
     pub fn get_label_count(&self) -> usize {
         usize::from(self.offsets.len())
     }
+
+    /*
+    pub fn split(
+        &self,
+        start_label: usize,
+        label_count_: usize,
+    ) -> Result<(LabelSequence, LabelSequence)> {
+        let max_label_count = self.offsets.len() as usize;
+        return Err(DNSError::InvalidLabelIndex.into());
+        Ok((
+            LabelSequence { data, offsets },
+            LabelSequence { data, offsets },
+        ))
+    }
+    */
 }
 
 #[cfg(test)]

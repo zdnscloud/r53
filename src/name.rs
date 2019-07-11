@@ -401,8 +401,8 @@ impl Name {
     }
 
     pub fn get_relation(&self, other: &Name) -> NameComparisonResult {
-        let ls1 = LabelSlice::new(self);
-        let ls2 = LabelSlice::new(other);
+        let ls1 = LabelSlice::from_name(self);
+        let ls2 = LabelSlice::from_name(other);
         ls1.compare(&ls2, false)
     }
 
