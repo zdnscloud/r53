@@ -1,7 +1,6 @@
-use crate::error::DNSError;
 use crate::message_render::MessageRender;
 use crate::name::Name;
-use crate::rdata_field::{name_field_from_iter, u16_field_from_iter};
+use crate::rdatafield_string_parser::Parser;
 use crate::util::{InputBuffer, OutputBuffer};
 use failure::Result;
 
@@ -18,14 +17,10 @@ impl MX {
         Ok(MX { preference, name })
     }
 
-    pub fn from_string<'a>(rdata_str: &mut impl Iterator<Item = &'a str>) -> Result<Self> {
-        match u16_field_from_iter("preference", rdata_str) {
-            Err(e) => Err(DNSError::InvalidRdataString("MX", e).into()),
-            Ok(preference) => match name_field_from_iter("name", rdata_str) {
-                Err(e) => Err(DNSError::InvalidRdataString("MX", e).into()),
-                Ok(name) => Ok(MX { preference, name }),
-            },
-        }
+    pub fn from_str<'a>(iter: &mut Parser<'a>) -> Result<Self> {
+        let preference = iter.next_field::<u16>("MX", "preference")?;
+        let name = iter.next_field::<Name>("MX", "name")?;
+        Ok(MX { preference, name })
     }
 
     pub fn rend(&self, render: &mut MessageRender) {

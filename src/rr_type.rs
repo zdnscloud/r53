@@ -1,9 +1,9 @@
 use crate::error::DNSError;
 use crate::message_render::MessageRender;
 use crate::util::{InputBuffer, OutputBuffer};
-use core::convert::TryFrom;
 use failure::Result;
 use std::fmt;
+use std::str::FromStr;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[allow(dead_code)]
@@ -136,9 +136,9 @@ impl fmt::Display for RRType {
     }
 }
 
-impl TryFrom<&str> for RRType {
-    type Error = failure::Error;
-    fn try_from(s: &str) -> core::result::Result<Self, Self::Error> {
+impl FromStr for RRType {
+    type Err = failure::Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         match s.to_uppercase().as_ref() {
             "A" => Ok(RRType::A),
             "NS" => Ok(RRType::NS),

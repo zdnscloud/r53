@@ -2,12 +2,13 @@ use crate::error::DNSError;
 use crate::message_render::MessageRender;
 use crate::name::Name;
 use crate::rdata::RData;
+use crate::rdatafield_string_parser::Parser;
 use crate::rr_class::RRClass;
 use crate::rr_type::RRType;
 use crate::util::{InputBuffer, OutputBuffer};
-use core::convert::TryFrom;
 use failure::{self, Result};
 use std::fmt::Write;
+use std::str::FromStr;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct RRTtl(pub u32);
@@ -30,9 +31,9 @@ impl RRTtl {
     }
 }
 
-impl TryFrom<&str> for RRTtl {
-    type Error = failure::Error;
-    fn try_from(s: &str) -> core::result::Result<Self, Self::Error> {
+impl FromStr for RRTtl {
+    type Err = failure::Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         match s.parse::<u32>() {
             Ok(num) => Ok(RRTtl(num)),
             Err(_) => Err(DNSError::InvalidTtlString.into()),
@@ -141,19 +142,19 @@ impl RRset {
     }
 }
 
-impl TryFrom<&str> for RRset {
-    type Error = failure::Error;
-    fn try_from(s: &str) -> core::result::Result<Self, Self::Error> {
-        let mut labels = s.trim().split_whitespace();
+impl FromStr for RRset {
+    type Err = failure::Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let mut labels = Parser::new(s.trim());
 
         let name = if let Some(name_str) = labels.next() {
-            Name::try_from(name_str)?
+            Name::from_str(name_str)?
         } else {
             return Err(DNSError::InvalidRRsetString.into());
         };
 
         let ttl = if let Some(ttl_str) = labels.next() {
-            RRTtl::try_from(ttl_str)?
+            RRTtl::from_str(ttl_str)?
         } else {
             return Err(DNSError::InvalidRRsetString.into());
         };
@@ -165,7 +166,7 @@ impl TryFrom<&str> for RRset {
             return Err(DNSError::InvalidRRsetString.into());
         };
 
-        let class = match RRClass::try_from(cls_str) {
+        let class = match RRClass::from_str(cls_str) {
             Ok(cls) => cls,
             Err(_) => {
                 short_of_class = true;
@@ -174,14 +175,14 @@ impl TryFrom<&str> for RRset {
         };
 
         let typ = if short_of_class {
-            RRType::try_from(cls_str)?
+            RRType::from_str(cls_str)?
         } else if let Some(typ_str) = labels.next() {
-            RRType::try_from(typ_str)?
+            RRType::from_str(typ_str)?
         } else {
             return Err(DNSError::InvalidRRsetString.into());
         };
 
-        let rdata = RData::from_string(typ, &mut labels)?;
+        let rdata = RData::from_str(typ, &mut labels)?;
         Ok(RRset {
             name,
             typ,
@@ -203,7 +204,7 @@ mod test {
             from_hex("0474657374076578616d706c6503636f6d000001000100000e100004c0000201").unwrap();
         let mut buf = InputBuffer::new(raw.as_slice());
         let rrset = RRset::from_wire(&mut buf).unwrap();
-        let desired_rrset = RRset::try_from("test.example.com. 3600 IN A 192.0.2.1").unwrap();
+        let desired_rrset = RRset::from_str("test.example.com. 3600 IN A 192.0.2.1").unwrap();
         assert_eq!(rrset, desired_rrset);
         let mut render = MessageRender::new();
         desired_rrset.rend(&mut render);
@@ -235,11 +236,11 @@ mod test {
         ];
 
         for (index, rrset_str) in rrset_strs.iter().enumerate() {
-            let rrset = RRset::try_from(*rrset_str).expect("parse rrset failed");
+            let rrset = RRset::from_str(*rrset_str).expect("parse rrset failed");
             assert_eq!(rrset.typ, typs[index]);
             assert_eq!(
                 rrset.ttl,
-                RRTtl::try_from(format!("{}", (index + 1) * 100).as_ref()).unwrap()
+                RRTtl::from_str(format!("{}", (index + 1) * 100).as_ref()).unwrap()
             );
         }
     }

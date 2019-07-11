@@ -1,5 +1,5 @@
-use core::convert::TryFrom;
 use std::net::{SocketAddrV4, UdpSocket};
+use std::str::FromStr;
 
 extern crate clap;
 extern crate r53;
@@ -65,7 +65,7 @@ fn main() {
         Some(t) => t.as_ref(),
         None => "a",
     };
-    let qtype = RRType::try_from(qtype.as_ref()).expect("unknown qtype");
+    let qtype = RRType::from_str(qtype.as_ref()).expect("unknown qtype");
 
     let query = Message::with_query(name, qtype);
     let mut render = MessageRender::new();

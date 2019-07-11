@@ -209,7 +209,7 @@ mod test {
     use crate::rcode::Rcode;
     use crate::rr_type::RRType;
     use crate::util::hex::from_hex;
-    use core::convert::TryFrom;
+    use std::str::FromStr;
 
     fn build_desired_message() -> Message {
         let mut msg = Message::with_query(Name::new("test.example.com.").unwrap(), RRType::A);
@@ -222,10 +222,10 @@ mod test {
                 .set_flag(HeaderFlag::QueryRespone)
                 .set_flag(HeaderFlag::AuthAnswer)
                 .set_flag(HeaderFlag::RecursionDesired)
-                .add_answer(RRset::try_from("test.example.com. 3600 IN A 192.0.2.2").unwrap())
-                .add_answer(RRset::try_from("test.example.com. 3600 IN A 192.0.2.1").unwrap())
-                .add_auth(RRset::try_from("example.com. 3600 IN NS ns1.example.com.").unwrap())
-                .add_additional(RRset::try_from("ns1.example.com. 3600 IN A 2.2.2.2").unwrap())
+                .add_answer(RRset::from_str("test.example.com. 3600 IN A 192.0.2.2").unwrap())
+                .add_answer(RRset::from_str("test.example.com. 3600 IN A 192.0.2.1").unwrap())
+                .add_auth(RRset::from_str("example.com. 3600 IN NS ns1.example.com.").unwrap())
+                .add_additional(RRset::from_str("ns1.example.com. 3600 IN A 2.2.2.2").unwrap())
                 .edns(Edns {
                     versoin: 0,
                     extened_rcode: 0,
@@ -241,9 +241,7 @@ mod test {
     #[test]
     fn test_message_to_wire() {
         let raw =
-            from_hex("04b0850000010002000100020474657374076578616d706c6503636f6d0000010001c00c0001000100000e10000
-                     4c0000202c00c0001000100000e100004c0000201c0110002000100000e100006036e7331c011c04e0001000100000e100004020202020000
-                     291000000000000000").unwrap();
+            from_hex("04b0850000010002000100020474657374076578616d706c6503636f6d0000010001c00c0001000100000e100004c0000202c00c0001000100000e100004c0000201c0110002000100000e100006036e7331c011c04e0001000100000e100004020202020000291000000000000000").unwrap();
         let message = Message::from_wire(raw.as_slice()).unwrap();
         let desired_message = build_desired_message();
         assert_eq!(message, desired_message);
@@ -251,5 +249,21 @@ mod test {
         let mut render = MessageRender::new();
         desired_message.rend(&mut render);
         assert_eq!(raw.as_slice(), render.data());
+
+        let raw =
+            from_hex("04b08500000100010001000103656565066e69757a756f036f72670000100001c00c0010000100000e10001302446f03796f750477616e7402746f03646965c0100002000100000e10001404636e7331097a646e73636c6f7564036e6574000000291000000000000000").unwrap();
+        let message = Message::from_wire(raw.as_slice()).unwrap();
+        println!("msg:{}", message.to_string());
+        let mut render = MessageRender::new();
+        message.rend(&mut render);
+        assert_eq!(raw.as_slice(), render.data());
+        assert_eq!(
+            message.sections[SectionType::Answer as usize]
+                .0
+                .as_ref()
+                .unwrap()[0],
+            RRset::from_str("eee.niuzuo.org.	3600	IN	TXT	\"Do\" \"you\" \"want\" \"to\" \"die\"")
+                .unwrap()
+        );
     }
 }

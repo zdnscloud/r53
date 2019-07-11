@@ -59,6 +59,6 @@ pub enum DNSError {
     #[fail(display = "rrtype isn't support yet")]
     RRTypeIsNotSupport,
 
-    #[fail(display = "rdata with type {} isn't valid {}", _0, _1)]
-    InvalidRdataString(&'static str, String),
+    #[fail(display = "rdata field {} with type {} isn't valid: {}", _1, _0, _2)]
+    InvalidRdataString(&'static str, &'static str, String),
 }
