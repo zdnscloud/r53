@@ -15,10 +15,10 @@ pub struct LabelSlice<'a> {
 impl<'a> LabelSlice<'a> {
     pub fn from_name(name: &'a Name) -> LabelSlice {
         LabelSlice {
-            data: name.raw.as_slice(),
-            offsets: name.offsets.as_slice(),
+            data: name.raw_data(),
+            offsets: name.offsets(),
             first_label: 0,
-            last_label: usize::from(name.label_count - 1),
+            last_label: usize::from(name.label_count() - 1),
         }
     }
 
@@ -29,24 +29,6 @@ impl<'a> LabelSlice<'a> {
             first_label: 0,
             last_label: ls.get_label_count() - 1,
         }
-    }
-
-    pub fn into_label_sequence(self, mut name: Name) -> LabelSequence {
-        if self.first_label != 0 {
-            name.raw.drain(0..self.offsets[self.first_label] as usize);
-            name.offsets.drain(0..self.first_label);
-        }
-        name.raw
-            .drain(self.offsets[self.first_label] as usize + self.get_data_length() + 1..);
-        name.offsets.drain(self.last_label + 1..);
-
-        if self.first_label != 0 {
-            let curr_label_value = self.offsets[self.first_label];
-            for v in &mut name.offsets {
-                *v -= curr_label_value;
-            }
-        }
-        LabelSequence::new(name.raw, name.offsets)
     }
 
     pub fn get_offsets(&self) -> &'a [u8] {
@@ -61,6 +43,14 @@ impl<'a> LabelSlice<'a> {
     pub fn get_data_length(&self) -> usize {
         let last_label_len: u8 = self.data[usize::from(self.offsets[self.last_label])];
         usize::from(self.offsets[self.last_label] - self.offsets[self.first_label] + last_label_len)
+    }
+
+    pub fn get_first_label(&self) -> usize {
+        self.first_label
+    }
+
+    pub fn get_last_label(&self) -> usize {
+        self.last_label
     }
 
     pub fn equals(&self, other: &LabelSlice, case_sensitive: bool) -> bool {
@@ -259,7 +249,8 @@ mod test {
 
         ls_slice.strip_left(1);
         ls_slice.strip_right(1);
-        let ls_sequence = ls_slice.into_label_sequence(ls_name);
+        /*
+        let ls_sequence = ls_name.into_label_sequence(ls_slice);
         let ls_slice2 = LabelSlice::from_label_sequence(&ls_sequence);
 
         let ls_name_2 = Name::new("www.google.com.").unwrap();
@@ -269,5 +260,6 @@ mod test {
             ls_slice2.compare(&ls_slice3, false).relation,
             NameRelation::Equal
         );
+        */
     }
 }

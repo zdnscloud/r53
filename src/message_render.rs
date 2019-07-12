@@ -35,11 +35,11 @@ impl<'a> NameRef<'a> {
     }
 
     fn is_root(&self) -> bool {
-        self.parent_level + 1 == self.name.label_count
+        self.parent_level + 1 == self.name.label_count() as u8
     }
 
     fn raw_data(&self) -> &[u8] {
-        let offset = self.name.offsets[self.parent_level as usize] as usize;
+        let offset = self.name.offsets()[self.parent_level as usize] as usize;
         &self.name.raw_data()[offset..]
     }
 
