@@ -31,17 +31,22 @@ impl<'a> LabelSlice<'a> {
         }
     }
 
-    pub fn into_label_sequence(self) -> LabelSequence {
-        if self.first_label == 0 {
-            LabelSequence::new(self.get_data().to_vec(), self.get_offsets().to_vec())
-        } else {
+    pub fn into_label_sequence(self, mut name: Name) -> LabelSequence {
+        if self.first_label != 0 {
+            name.raw.drain(0..self.offsets[self.first_label] as usize);
+            name.offsets.drain(0..self.first_label);
+        }
+        name.raw
+            .drain(self.offsets[self.first_label] as usize + self.get_data_length() + 1..);
+        name.offsets.drain(self.last_label + 1..);
+
+        if self.first_label != 0 {
             let curr_label_value = self.offsets[self.first_label];
-            let mut offsets = self.get_offsets().to_vec();
-            for v in &mut offsets {
+            for v in &mut name.offsets {
                 *v -= curr_label_value;
             }
-            LabelSequence::new(self.get_data().to_vec(), offsets)
         }
+        LabelSequence::new(name.raw, name.offsets)
     }
 
     pub fn get_offsets(&self) -> &'a [u8] {
@@ -254,7 +259,7 @@ mod test {
 
         ls_slice.strip_left(1);
         ls_slice.strip_right(1);
-        let ls_sequence = ls_slice.into_label_sequence();
+        let ls_sequence = ls_slice.into_label_sequence(ls_name);
         let ls_slice2 = LabelSlice::from_label_sequence(&ls_sequence);
 
         let ls_name_2 = Name::new("www.google.com.").unwrap();

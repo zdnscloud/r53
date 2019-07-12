@@ -1,4 +1,3 @@
-use crate::error::DNSError;
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct LabelSequence {
     data: Vec<u8>,
