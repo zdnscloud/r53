@@ -390,20 +390,15 @@ impl Name {
     pub fn into_label_sequence(mut self, first_label: usize, last_label: usize) -> LabelSequence {
         let last_label_len: u8 = self.raw[usize::from(self.offsets[last_label])] + 1;
         let data_length: u8 = self.offsets[last_label] + last_label_len;
-        println!("{} {} {}", first_label, last_label, data_length);
         self.raw.drain(data_length as usize..);
         self.offsets.drain(last_label + 1..);
         if first_label != 0 {
-            println!("ori data :{:?}", self.raw);
-            println!("ori offset :{:?}", self.offsets);
             self.raw.drain(0..self.offsets[first_label] as usize);
             self.offsets.drain(0..first_label);
-            println!("data :{:?}", self.raw);
             let curr_label_value = self.offsets[0];
             for v in &mut self.offsets {
                 *v -= curr_label_value;
             }
-            println!("offset :{:?}", self.offsets);
         }
 
         LabelSequence::new(self.raw, self.offsets)
