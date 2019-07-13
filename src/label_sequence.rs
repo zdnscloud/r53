@@ -37,7 +37,7 @@ impl LabelSequence {
     }
 
     pub fn get_label_count(&self) -> usize {
-        usize::from(self.offsets.len())
+        self.offsets.len()
     }
 
     /*

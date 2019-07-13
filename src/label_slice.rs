@@ -18,7 +18,7 @@ impl<'a> LabelSlice<'a> {
             data: name.raw_data(),
             offsets: name.offsets(),
             first_label: 0,
-            last_label: usize::from(name.label_count() - 1),
+            last_label: name.label_count() - 1,
         }
     }
 
@@ -32,16 +32,16 @@ impl<'a> LabelSlice<'a> {
     }
 
     pub fn get_offsets(&self) -> &'a [u8] {
-        &self.offsets[self.first_label..self.last_label + 1]
+        &self.offsets[self.first_label..=self.last_label]
     }
 
     pub fn get_data(&self) -> &'a [u8] {
         let first_label_index: usize = usize::from(self.offsets[self.first_label]);
-        &self.data[first_label_index..first_label_index + self.get_data_length() + 1]
+        &self.data[first_label_index..first_label_index + self.get_data_length()]
     }
 
     pub fn get_data_length(&self) -> usize {
-        let last_label_len: u8 = self.data[usize::from(self.offsets[self.last_label])];
+        let last_label_len: u8 = self.data[usize::from(self.offsets[self.last_label])] + 1;
         usize::from(self.offsets[self.last_label] - self.offsets[self.first_label] + last_label_len)
     }
 
@@ -85,9 +85,7 @@ impl<'a> LabelSlice<'a> {
             l1 -= 1;
             l2 -= 1;
             let mut pos1: usize = usize::from(self.offsets[l1 + self.first_label]);
-            println!("pos 1 {}", pos1);
             let mut pos2: usize = usize::from(other.offsets[l2 + other.first_label]);
-            println!("pos 2 {}", pos1);
             let count1: usize = usize::from(self.data[pos1]);
             let count2: usize = usize::from(other.data[pos2]);
             pos1 += 1;
@@ -96,8 +94,6 @@ impl<'a> LabelSlice<'a> {
             let mut count = cmp::min(count1, count2);
 
             while count > 0 {
-                println!("data 11 {:?}", self.data);
-                println!("data 22 {:?}", self.data);
                 let label1: u8 = self.data[pos1];
                 let label2: u8 = other.data[pos2];
                 let mut chdiff: bool = true;
@@ -166,7 +162,7 @@ mod test {
     use super::*;
     use crate::name::Name;
     #[test]
-    fn test_label_sequence_new() {
+    fn test_label_slice_new() {
         //0377777705626169647503636f6d00
         let n1 = Name::new("www.baidu.com.").unwrap();
         let ls1 = LabelSlice::from_name(&n1);
@@ -249,8 +245,11 @@ mod test {
 
         ls_slice.strip_left(1);
         ls_slice.strip_right(1);
-        /*
-        let ls_sequence = ls_name.into_label_sequence(ls_slice);
+        let first_label = ls_slice.get_first_label();
+        assert_eq!(first_label, 1);
+        let last_label = ls_slice.get_last_label();
+        assert_eq!(last_label, 3);
+        let ls_sequence = ls_name.into_label_sequence(first_label, last_label);
         let ls_slice2 = LabelSlice::from_label_sequence(&ls_sequence);
 
         let ls_name_2 = Name::new("www.google.com.").unwrap();
@@ -260,6 +259,5 @@ mod test {
             ls_slice2.compare(&ls_slice3, false).relation,
             NameRelation::Equal
         );
-        */
     }
 }

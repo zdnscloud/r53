@@ -387,22 +387,25 @@ impl Name {
         unsafe { String::from_utf8_unchecked(buf) }
     }
 
-    pub fn into_label_sequence(mut self, ls: LabelSlice) -> LabelSequence {
-        if ls.get_first_label() != 0 {
-            self.raw
-                .drain(0..self.offsets[ls.get_first_label()] as usize);
-            self.offsets.drain(0..ls.get_first_label());
-        }
-        self.raw
-            .drain(self.offsets[ls.get_first_label()] as usize + ls.get_data_length() + 1..);
-        self.offsets.drain(ls.get_last_label() + 1..);
-
-        if ls.get_first_label() != 0 {
-            let curr_label_value = self.offsets[ls.get_first_label()];
+    pub fn into_label_sequence(mut self, first_label: usize, last_label: usize) -> LabelSequence {
+        let last_label_len: u8 = self.raw[usize::from(self.offsets[last_label])] + 1;
+        let data_length: u8 = self.offsets[last_label] + last_label_len;
+        println!("{} {} {}", first_label, last_label, data_length);
+        self.raw.drain(data_length as usize..);
+        self.offsets.drain(last_label + 1..);
+        if first_label != 0 {
+            println!("ori data :{:?}", self.raw);
+            println!("ori offset :{:?}", self.offsets);
+            self.raw.drain(0..self.offsets[first_label] as usize);
+            self.offsets.drain(0..first_label);
+            println!("data :{:?}", self.raw);
+            let curr_label_value = self.offsets[0];
             for v in &mut self.offsets {
                 *v -= curr_label_value;
             }
+            println!("offset :{:?}", self.offsets);
         }
+
         LabelSequence::new(self.raw, self.offsets)
     }
 
