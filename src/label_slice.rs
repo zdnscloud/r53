@@ -146,11 +146,13 @@ impl<'a> LabelSlice<'a> {
         }
     }
 
+    #[inline]
     pub fn strip_left(&mut self, index: usize) {
         assert!(index < self.get_label_count());
         self.first_label += index;
     }
 
+    #[inline]
     pub fn strip_right(&mut self, index: usize) {
         assert!(index < self.get_label_count());
         self.last_label -= index;

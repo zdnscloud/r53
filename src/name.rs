@@ -329,14 +329,17 @@ impl Name {
         Ok(Name { raw: data, offsets })
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
         self.raw.len() as usize
     }
 
+    #[inline]
     pub fn is_empty(&self) -> bool {
-        self.raw.len() == 0
+        return self.len() == 0;
     }
 
+    #[inline]
     pub fn label_count(&self) -> usize {
         self.offsets.len() as usize
     }
@@ -632,14 +635,17 @@ impl Name {
         }
     }
 
+    #[inline]
     pub fn is_root(&self) -> bool {
         self.raw.len() == 1 && self.raw[0] == 0
     }
 
+    #[inline]
     pub fn raw_data(&self) -> &[u8] {
         self.raw.as_slice()
     }
 
+    #[inline]
     pub fn offsets(&self) -> &[u8] {
         self.offsets.as_slice()
     }
