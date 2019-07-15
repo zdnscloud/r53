@@ -1,4 +1,5 @@
 use crate::error::DNSError;
+use crate::name;
 #[derive(Debug, Clone)]
 pub struct LabelSequence {
     data: Vec<u8>,
@@ -17,7 +18,7 @@ impl LabelSequence {
         self.offsets.as_slice()
     }
 
-    pub fn data_length(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.data.len()
     }
 
@@ -84,6 +85,47 @@ impl LabelSequence {
         }
 
         Ok(LabelSequence { data, offsets })
+    }
+
+    pub fn concat_all(&self, suffixes: &[&LabelSequence]) -> Result<LabelSequence, DNSError> {
+        let mut final_length = self.len();
+        let mut final_label_count = self.label_count();
+        let suffix_count = suffixes.len();
+        for suffix in suffixes {
+            final_length += suffix.len() - 1;
+            final_label_count += suffix.label_count() - 1;
+        }
+
+        if final_length > name::MAX_WIRE_LEN {
+            return Err(DNSError::TooLongName.into());
+        } else if final_label_count > name::MAX_LABEL_COUNT as usize {
+            return Err(DNSError::TooLongLabel.into());
+        }
+
+        let mut data = Vec::with_capacity(final_length as usize);
+        data.extend_from_slice(&self.data[..(self.len() as usize - 1)]);
+        for suffix in &suffixes[..(suffix_count as usize - 1)] {
+            data.extend_from_slice(&suffix.data[..(suffix.len() as usize - 1)])
+        }
+        data.extend_from_slice(&(suffixes[suffix_count - 1].data[..]));
+
+        let mut offsets = Vec::with_capacity(final_label_count as usize);
+        offsets.extend_from_slice(&self.offsets[..]);
+        let mut copied_len = self.label_count();
+        for suffix in suffixes {
+            let last_offset = offsets[copied_len as usize - 1];
+            offsets.extend_from_slice(&suffix.offsets[1..(suffix.label_count() as usize)]);
+            for i in copied_len..(copied_len + suffix.label_count() - 1) {
+                offsets[i as usize] += last_offset as u8
+            }
+            copied_len += suffix.label_count() - 1;
+        }
+
+        Ok(LabelSequence { data, offsets })
+    }
+
+    pub fn concat(&self, suffix: &LabelSequence) -> Result<LabelSequence, DNSError> {
+        self.concat_all(&[suffix])
     }
 }
 
