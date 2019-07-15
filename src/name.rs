@@ -108,7 +108,7 @@ pub static MAP_TO_LOWER: &'static [u8] = &[
 ];
 
 #[inline]
-pub fn lower_caes(c: usize) -> u8 {
+pub fn lower_case(c: usize) -> u8 {
     MAP_TO_LOWER[c]
 }
 
@@ -527,7 +527,7 @@ impl Name {
             let mut label_len = self.raw[p];
             p += 1;
             while label_len > 0 {
-                self.raw[p] = lower_caes(self.raw[p] as usize);
+                self.raw[p] = lower_case(self.raw[p] as usize);
                 p += 1;
                 label_len -= 1;
             }
@@ -614,8 +614,8 @@ impl Name {
         let mut i = self.len() - 1;
         let mut j = parent.len() - 1;
         while j > 0 {
-            if lower_caes(parent.raw[j as usize] as usize)
-                != lower_caes(self.raw[i as usize] as usize)
+            if lower_case(parent.raw[j as usize] as usize)
+                != lower_case(self.raw[i as usize] as usize)
             {
                 return false;
             }
@@ -682,8 +682,8 @@ impl cmp::PartialEq for Name {
 
             while count > 0 {
                 count -= 1;
-                if lower_caes(self.raw[pos as usize] as usize)
-                    != lower_caes(other.raw[pos as usize] as usize)
+                if lower_case(self.raw[pos as usize] as usize)
+                    != lower_case(other.raw[pos as usize] as usize)
                 {
                     return false;
                 }
@@ -720,7 +720,7 @@ impl cmp::Ord for Name {
 impl Hash for Name {
     fn hash<H: Hasher>(&self, state: &mut H) {
         for c in self.raw.as_slice() {
-            state.write_u8(lower_caes(*c as usize));
+            state.write_u8(lower_case(*c as usize));
         }
     }
 }
@@ -803,6 +803,11 @@ mod test {
         assert!(relation.order < 0);
         assert_eq!(relation.common_label_count, 3);
         assert_eq!(relation.relation, NameRelation::SuperDomain);
+
+        let range1 = Name::new("f14OMOZF16PGI-Wh2FGVXQ8I6Ma8NFuX3yH.UlG5SSbTOzya-acxXEK0W9D4pewmpEyhJ5VMQT1qdDk5xUOZo.3Go5Nbx0-wJBKnOHobRncMDVWqpekEBMYWaa1RChZelAqqIENfv-EGh.YpG6Natyn0av0VQd2aSmf05bt5WkkZao-4O9hU8ZO2WNgVu2C6sOGraLdZPg.p6S.CkQ.NM.").unwrap();
+        let range2 = Name::new("qI0.BUHM.n.").unwrap();
+        let relation = range1.get_relation(&range2);
+        assert!(relation.order > 0);
     }
 
     #[test]

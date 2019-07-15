@@ -1,4 +1,5 @@
 use crate::label_sequence::LabelSequence;
+use crate::name::lower_case;
 use crate::name::Name;
 use crate::name::NameComparisonResult;
 use crate::name::NameRelation;
@@ -94,19 +95,19 @@ impl<'a> LabelSlice<'a> {
             let mut count = cmp::min(count1, count2);
 
             while count > 0 {
-                let label1: u8 = self.data[pos1];
-                let label2: u8 = other.data[pos2];
-                let mut chdiff: bool = true;
+                let mut label1: u8 = self.data[pos1];
+                let mut label2: u8 = other.data[pos2];
+                let chdiff: i8;
                 if case_sensitive {
-                    if (label1 - label2) != 0 {
-                        chdiff = false;
-                    }
+                    chdiff = (label1) as i8 - (label2) as i8;
                 } else {
-                    chdiff = label1.eq_ignore_ascii_case(&label2);
+                    label1 = lower_case(label1 as usize);
+                    label2 = lower_case(label2 as usize);
+                    chdiff = (label1) as i8 - (label2) as i8;
                 }
-                if !chdiff {
+                if chdiff != 0 {
                     return NameComparisonResult {
-                        order: (label1 as i8) - (label2 as i8),
+                        order: chdiff,
                         common_label_count: nlabels as u8,
                         relation: if nlabels == 0 {
                             NameRelation::None
