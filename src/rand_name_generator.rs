@@ -63,12 +63,20 @@ impl Iterator for RandNameGenerator {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::collections::HashSet;
 
     #[test]
     fn test_gen_name() {
         let mut gen = RandNameGenerator::new();
+        let mut names = HashSet::new();
+        let mut duplicate = 0;
         for _i in 0..1000 {
-            println!("name is {}", gen.next().unwrap().to_string());
+            let name = gen.next().unwrap();
+            if names.contains(&name) {
+                duplicate += 1;
+            }
+            names.insert(name);
         }
+        assert!(duplicate < 3);
     }
 }
