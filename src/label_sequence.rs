@@ -1,5 +1,5 @@
 use crate::error::DNSError;
-use crate::name;
+use crate::name::{self, Name};
 #[derive(Debug, Clone)]
 pub struct LabelSequence {
     data: Vec<u8>,
@@ -87,7 +87,7 @@ impl LabelSequence {
         Ok(LabelSequence { data, offsets })
     }
 
-    pub fn concat_all(&self, suffixes: &[&LabelSequence]) -> Result<LabelSequence, DNSError> {
+    pub fn concat_all(&self, suffixes: &[&LabelSequence]) -> Result<Name, DNSError> {
         let mut final_length = self.len();
         let mut final_label_count = self.label_count();
         let suffix_count = suffixes.len();
@@ -121,11 +121,7 @@ impl LabelSequence {
             copied_len += suffix.label_count() - 1;
         }
 
-        Ok(LabelSequence { data, offsets })
-    }
-
-    pub fn concat(&self, suffix: &LabelSequence) -> Result<LabelSequence, DNSError> {
-        self.concat_all(&[suffix])
+        Ok(Name::from_raw(data, offsets))
     }
 }
 

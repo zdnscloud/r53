@@ -255,6 +255,10 @@ impl Name {
         }
     }
 
+    pub(crate) fn from_raw(raw: Vec<u8>, offsets: Vec<u8>) -> Self {
+        Name { raw, offsets }
+    }
+
     pub fn from_wire(buf: &mut InputBuffer) -> Result<Self> {
         let mut n: usize = 0;
         let mut nused: usize = 0;
