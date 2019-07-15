@@ -761,6 +761,10 @@ mod test {
             www_knet_cn.split(1, 2).unwrap().to_string(),
             "knet.Cn.".to_string()
         );
+        assert_eq!(
+            www_knet_cn.split(1, 1).unwrap().to_string(),
+            "knet.".to_string()
+        );
 
         assert_eq!(
             www_knet_cn.parent(0).unwrap().to_string(),

@@ -24,38 +24,38 @@ impl<'a> LabelSlice<'a> {
 
     pub fn from_label_sequence(ls: &'a LabelSequence) -> LabelSlice {
         LabelSlice {
-            data: ls.get_data(),
-            offsets: ls.get_offsets(),
+            data: ls.data(),
+            offsets: ls.offsets(),
             first_label: 0,
-            last_label: ls.get_label_count() - 1,
+            last_label: ls.label_count() - 1,
         }
     }
 
-    pub fn get_offsets(&self) -> &'a [u8] {
+    pub fn offsets(&self) -> &'a [u8] {
         &self.offsets[self.first_label..=self.last_label]
     }
 
-    pub fn get_data(&self) -> &'a [u8] {
+    pub fn data(&self) -> &'a [u8] {
         let first_label_index: usize = usize::from(self.offsets[self.first_label]);
-        &self.data[first_label_index..first_label_index + self.get_data_length()]
+        &self.data[first_label_index..first_label_index + self.data_length()]
     }
 
-    pub fn get_data_length(&self) -> usize {
+    pub fn data_length(&self) -> usize {
         let last_label_len: u8 = self.data[usize::from(self.offsets[self.last_label])] + 1;
         usize::from(self.offsets[self.last_label] - self.offsets[self.first_label] + last_label_len)
     }
 
-    pub fn get_first_label(&self) -> usize {
+    pub fn first_label(&self) -> usize {
         self.first_label
     }
 
-    pub fn get_last_label(&self) -> usize {
+    pub fn last_label(&self) -> usize {
         self.last_label
     }
 
     pub fn equals(&self, other: &LabelSlice, case_sensitive: bool) -> bool {
-        let data = self.get_data();
-        let other_data = other.get_data();
+        let data = self.data();
+        let other_data = other.data();
         let len = data.len();
         let other_len = other_data.len();
         if len != other_len {
@@ -69,14 +69,14 @@ impl<'a> LabelSlice<'a> {
         true
     }
 
-    pub fn get_label_count(&self) -> usize {
+    pub fn label_count(&self) -> usize {
         self.last_label - self.first_label + 1
     }
 
     pub fn compare(&self, other: &LabelSlice, case_sensitive: bool) -> NameComparisonResult {
         let mut nlabels: usize = 0;
-        let mut l1: usize = self.get_label_count();
-        let mut l2: usize = other.get_label_count();
+        let mut l1: usize = self.label_count();
+        let mut l2: usize = other.label_count();
         let ldiff = (l1 as isize) - (l2 as isize);
         let mut l = cmp::min(l1, l2);
 
@@ -148,13 +148,13 @@ impl<'a> LabelSlice<'a> {
 
     #[inline]
     pub fn strip_left(&mut self, index: usize) {
-        assert!(index < self.get_label_count());
+        assert!(index < self.label_count());
         self.first_label += index;
     }
 
     #[inline]
     pub fn strip_right(&mut self, index: usize) {
-        assert!(index < self.get_label_count());
+        assert!(index < self.label_count());
         self.last_label -= index;
     }
 }
@@ -187,11 +187,11 @@ mod test {
         assert_eq!(ls2.last_label, 3);
 
         assert_eq!(
-            ls1.get_data(),
+            ls1.data(),
             [3, 119, 119, 119, 5, 98, 97, 105, 100, 117, 3, 99, 111, 109, 0]
         );
         assert_eq!(
-            ls2.get_data(),
+            ls2.data(),
             [3, 119, 119, 119, 5, 98, 97, 105, 100, 117, 3, 99, 111, 77, 0]
         );
         assert_eq!(ls1.equals(&ls2, false), true);
@@ -247,9 +247,9 @@ mod test {
 
         ls_slice.strip_left(1);
         ls_slice.strip_right(1);
-        let first_label = ls_slice.get_first_label();
+        let first_label = ls_slice.first_label();
         assert_eq!(first_label, 1);
-        let last_label = ls_slice.get_last_label();
+        let last_label = ls_slice.last_label();
         assert_eq!(last_label, 3);
         let ls_sequence = ls_name.into_label_sequence(first_label, last_label);
         let ls_slice2 = LabelSlice::from_label_sequence(&ls_sequence);
