@@ -24,7 +24,7 @@ pub const MAX_LABEL_LEN: u8 = 63;
 pub const COMPRESS_POINTER_MARK8: u8 = 0xc0;
 pub const COMPRESS_POINTER_MARK16: u16 = 0xc000;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Name {
     raw: Vec<u8>,
     offsets: Vec<u8>,
@@ -655,6 +655,12 @@ impl FromStr for Name {
     type Err = failure::Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         Name::new(s)
+    }
+}
+
+impl fmt::Debug for Name {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
