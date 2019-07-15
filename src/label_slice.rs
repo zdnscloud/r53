@@ -98,13 +98,11 @@ impl<'a> LabelSlice<'a> {
                 let mut label1: u8 = self.data[pos1];
                 let mut label2: u8 = other.data[pos2];
                 let chdiff: i8;
-                if case_sensitive {
-                    chdiff = (label1) as i8 - (label2) as i8;
-                } else {
+                if !case_sensitive {
                     label1 = lower_case(label1 as usize);
                     label2 = lower_case(label2 as usize);
-                    chdiff = (label1) as i8 - (label2) as i8;
                 }
+                chdiff = (label1) as i8 - (label2) as i8;
                 if chdiff != 0 {
                     return NameComparisonResult {
                         order: chdiff,
