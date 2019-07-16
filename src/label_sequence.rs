@@ -1,5 +1,7 @@
 use crate::error::DNSError;
+use crate::label_slice::LabelSlice;
 use crate::name::{self, Name};
+use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
 
 #[derive(Debug, Clone)]
 pub struct LabelSequence {
@@ -119,6 +121,35 @@ impl LabelSequence {
         }
 
         Ok(Name::from_raw(data, offsets))
+    }
+}
+
+impl PartialEq for LabelSequence {
+    fn eq(&self, other: &LabelSequence) -> bool {
+        self.equals(other, false)
+    }
+}
+
+impl Eq for LabelSequence {}
+
+impl PartialOrd for LabelSequence {
+    fn partial_cmp(&self, other: &LabelSequence) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for LabelSequence {
+    fn cmp(&self, other: &LabelSequence) -> Ordering {
+        let self_slice = LabelSlice::from_label_sequence(self);
+        let other_slice = LabelSlice::from_label_sequence(other);
+        let result = self_slice.compare(&other_slice, false);
+        if result.order < 0 {
+            Ordering::Less
+        } else if result.order > 0 {
+            Ordering::Greater
+        } else {
+            Ordering::Equal
+        }
     }
 }
 

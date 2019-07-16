@@ -4,7 +4,7 @@ use crate::label_slice::LabelSlice;
 use crate::message_render::MessageRender;
 use crate::util::{InputBuffer, OutputBuffer};
 use failure::{self, Result};
-use std::cmp;
+use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
@@ -674,7 +674,7 @@ impl fmt::Display for Name {
     }
 }
 
-impl cmp::PartialEq for Name {
+impl PartialEq for Name {
     fn eq(&self, other: &Name) -> bool {
         if self.len() != other.len() || self.label_count() != other.label_count() {
             return false;
@@ -706,23 +706,23 @@ impl cmp::PartialEq for Name {
     }
 }
 
-impl cmp::Eq for Name {}
+impl Eq for Name {}
 
-impl cmp::PartialOrd for Name {
-    fn partial_cmp(&self, other: &Name) -> Option<cmp::Ordering> {
+impl PartialOrd for Name {
+    fn partial_cmp(&self, other: &Name) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl cmp::Ord for Name {
-    fn cmp(&self, other: &Name) -> cmp::Ordering {
+impl Ord for Name {
+    fn cmp(&self, other: &Name) -> Ordering {
         let relation = self.get_relation(other);
         if relation.order < 0 {
-            cmp::Ordering::Less
+            Ordering::Less
         } else if relation.order > 0 {
-            cmp::Ordering::Greater
+            Ordering::Greater
         } else {
-            cmp::Ordering::Equal
+            Ordering::Equal
         }
     }
 }
