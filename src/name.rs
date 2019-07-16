@@ -4,10 +4,12 @@ use crate::label_slice::LabelSlice;
 use crate::message_render::MessageRender;
 use crate::util::{InputBuffer, OutputBuffer};
 use failure::{self, Result};
-use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
-use std::fmt;
-use std::hash::{Hash, Hasher};
-use std::str::FromStr;
+use std::{
+    cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd},
+    fmt,
+    hash::{Hash, Hasher},
+    str::FromStr,
+};
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum NameRelation {
@@ -112,7 +114,7 @@ pub fn lower_case(c: usize) -> u8 {
     MAP_TO_LOWER[c]
 }
 
-fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8>, Vec<u8>)> {
+pub fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8>, Vec<u8>)> {
     let mut start = start_pos;
     let mut data: Vec<u8> = Vec::with_capacity(end - start + 1);
     let mut offsets: Vec<u8> = Vec::new();
@@ -357,41 +359,7 @@ impl Name {
     }
 
     pub fn to_string(&self) -> String {
-        let mut buf = Vec::with_capacity(self.len());
-        let special_char: Vec<u8> = vec![0x22, 0x28, 0x29, 0x2E, 0x3B, 0x5C, 0x40, 0x24]; //" ( ) . ; \\ @ $
-        let mut i = 0;
-        while i < self.len() {
-            let mut count = self.raw[i as usize];
-            i += 1;
-
-            if count == 0 {
-                buf.push(b'.');
-                break;
-            }
-
-            if !buf.is_empty() {
-                buf.push(b'.');
-            }
-
-            while count > 0 {
-                count -= 1;
-                let c: u8 = self.raw[i as usize];
-                i += 1;
-                if special_char.contains(&c) {
-                    buf.push(b'\\');
-                    buf.push(c);
-                } else if c > 0x20 && c < 0x7f {
-                    buf.push(c);
-                } else {
-                    buf.push(0x5c);
-                    buf.push(0x30 + ((c / 100) % 10));
-                    buf.push(0x30 + ((c / 10) % 10));
-                    buf.push(0x30 + (c % 10));
-                }
-            }
-        }
-
-        unsafe { String::from_utf8_unchecked(buf) }
+        LabelSlice::from_name(self).to_string()
     }
 
     pub fn into_label_sequence(mut self, first_label: usize, last_label: usize) -> LabelSequence {
@@ -412,9 +380,7 @@ impl Name {
     }
 
     pub fn get_relation(&self, other: &Name) -> NameComparisonResult {
-        let ls1 = LabelSlice::from_name(self);
-        let ls2 = LabelSlice::from_name(other);
-        ls1.compare(&ls2, false)
+        LabelSlice::from_name(self).compare(&LabelSlice::from_name(other), false)
     }
 
     pub fn concat_all(&self, suffixes: &[&Name]) -> Result<Name> {

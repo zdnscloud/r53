@@ -1,7 +1,12 @@
 use crate::error::DNSError;
 use crate::label_slice::LabelSlice;
-use crate::name::{self, Name};
-use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
+use crate::name::{self, string_parse, Name};
+use failure::{self, Result};
+use std::{
+    cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd},
+    fmt,
+    str::FromStr,
+};
 
 #[derive(Debug, Clone)]
 pub struct LabelSequence {
@@ -40,11 +45,7 @@ impl LabelSequence {
         self.offsets.len()
     }
 
-    pub fn split(
-        &mut self,
-        start_label: usize,
-        label_count: usize,
-    ) -> Result<LabelSequence, DNSError> {
+    pub fn split(&mut self, start_label: usize, label_count: usize) -> Result<LabelSequence> {
         let max_label_count = self.label_count() as usize;
         if start_label >= max_label_count || label_count == 0 {
             return Err(DNSError::InvalidLabelIndex.into());
@@ -86,7 +87,7 @@ impl LabelSequence {
         Ok(LabelSequence { data, offsets })
     }
 
-    pub fn concat_all(&self, suffixes: &[&LabelSequence]) -> Result<Name, DNSError> {
+    pub fn concat_all(&self, suffixes: &[&LabelSequence]) -> Result<Name> {
         let mut final_length = self.len();
         let mut final_label_count = self.label_count();
         let suffix_count = suffixes.len();
@@ -102,17 +103,19 @@ impl LabelSequence {
         }
 
         let mut data = Vec::with_capacity(final_length as usize);
-        data.extend_from_slice(&self.data[..(self.len() as usize)]);
-        for suffix in &suffixes[..(suffix_count as usize - 1)] {
-            data.extend_from_slice(&suffix.data[..(suffix.len() as usize)])
+        data.extend_from_slice(self.data.as_ref());
+        if !suffixes.is_empty() {
+            for suffix in &suffixes[..(suffix_count as usize - 1)] {
+                data.extend_from_slice(suffix.data.as_ref())
+            }
+            data.extend_from_slice(suffixes[suffix_count - 1].data.as_ref());
         }
-        data.extend_from_slice(&(suffixes[suffix_count - 1].data[..]));
 
         let mut offsets = Vec::with_capacity(final_label_count as usize);
-        offsets.extend_from_slice(&self.offsets[..]);
+        offsets.extend_from_slice(&self.offsets.as_ref());
         let mut next_label_index = self.label_count();
         for suffix in suffixes {
-            offsets.extend_from_slice(&suffix.offsets[0..(suffix.label_count() as usize)]);
+            offsets.extend_from_slice(suffix.offsets.as_ref());
             for i in next_label_index..(next_label_index + suffix.label_count()) {
                 let last_offset = offsets[next_label_index as usize - 1];
                 offsets[i as usize] = last_offset + data[offsets[i - 1] as usize] + 1;
@@ -121,6 +124,10 @@ impl LabelSequence {
         }
 
         Ok(Name::from_raw(data, offsets))
+    }
+
+    pub fn to_string(&self) -> String {
+        LabelSlice::from_label_sequence(self).to_string()
     }
 }
 
@@ -153,23 +160,43 @@ impl Ord for LabelSequence {
     }
 }
 
+impl fmt::Display for LabelSequence {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", LabelSlice::from_label_sequence(self).to_string())
+    }
+}
+
+impl FromStr for LabelSequence {
+    type Err = failure::Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let len = s.len();
+        match string_parse(s.as_bytes(), 0, len) {
+            Ok((data, offsets)) => Ok(LabelSequence { data, offsets }),
+            Err(e) => Err(e),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
+    use super::LabelSequence;
     use crate::label_slice::LabelSlice;
     use crate::name::Name;
     use crate::name::NameRelation;
+    use std::str::FromStr;
+
     #[test]
     fn test_label_sequence_split() {
-        let www_google_com_cn_ = Name::new("www.google.com.cn.").unwrap();
-        let mut ls_www_google_com_cn_ = www_google_com_cn_.into_label_sequence(0, 4);
-        let ls_www = ls_www_google_com_cn_.split(0, 1).unwrap();
-        assert_eq!(ls_www.data(), [3, 119, 119, 119]);
-        assert_eq!(ls_www.offsets(), [0]);
+        let www_google_com_cn = Name::new("www.google.com.cn.").unwrap();
+        let mut www_google_com_cn = www_google_com_cn.into_label_sequence(0, 4);
+        let google_com_cn = www_google_com_cn.split(1, 4).unwrap();
+        assert_eq!(www_google_com_cn.data(), [3, 119, 119, 119]);
+        assert_eq!(www_google_com_cn.offsets(), [0]);
         assert_eq!(
-            ls_www_google_com_cn_.data(),
+            google_com_cn.data(),
             [6, 103, 111, 111, 103, 108, 101, 3, 99, 111, 109, 2, 99, 110, 0]
         );
-        assert_eq!(ls_www_google_com_cn_.offsets(), [0, 7, 11, 14]);
+        assert_eq!(google_com_cn.offsets(), [0, 7, 11, 14]);
     }
 
     #[test]
@@ -242,5 +269,11 @@ mod test {
         assert_eq!(baidu_relation.order, 0);
         assert_eq!(baidu_relation.common_label_count, 4);
         assert_eq!(baidu_relation.relation, NameRelation::Equal);
+
+        let seq_www_baidu = LabelSequence::from_str("www.baidu.cn.").unwrap();
+        assert_eq!(
+            Name::new("www.baidu.cn.").unwrap(),
+            seq_www_baidu.concat_all(&[]).unwrap()
+        );
     }
 }

@@ -3,7 +3,7 @@ use crate::name::lower_case;
 use crate::name::Name;
 use crate::name::NameComparisonResult;
 use crate::name::NameRelation;
-use std::cmp;
+use std::{cmp, fmt};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct LabelSlice<'a> {
@@ -155,6 +155,51 @@ impl<'a> LabelSlice<'a> {
     pub fn strip_right(&mut self, index: usize) {
         assert!(index < self.label_count());
         self.last_label -= index;
+    }
+
+    pub fn to_string(&self) -> String {
+        let mut buf = Vec::with_capacity(self.len());
+        let special_char: Vec<u8> = vec![0x22, 0x28, 0x29, 0x2E, 0x3B, 0x5C, 0x40, 0x24]; //" ( ) . ; \\ @ $
+        let mut i = 0;
+        let data = self.data();
+        while i < self.len() {
+            let mut count = data[i as usize];
+            i += 1;
+
+            if count == 0 {
+                buf.push(b'.');
+                break;
+            }
+
+            if !buf.is_empty() {
+                buf.push(b'.');
+            }
+
+            while count > 0 {
+                count -= 1;
+                let c: u8 = data[i as usize];
+                i += 1;
+                if special_char.contains(&c) {
+                    buf.push(b'\\');
+                    buf.push(c);
+                } else if c > 0x20 && c < 0x7f {
+                    buf.push(c);
+                } else {
+                    buf.push(0x5c);
+                    buf.push(0x30 + ((c / 100) % 10));
+                    buf.push(0x30 + ((c / 10) % 10));
+                    buf.push(0x30 + (c % 10));
+                }
+            }
+        }
+
+        unsafe { String::from_utf8_unchecked(buf) }
+    }
+}
+
+impl<'a> fmt::Display for LabelSlice<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
