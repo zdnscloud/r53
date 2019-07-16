@@ -32,46 +32,46 @@ impl<'a> LabelSlice<'a> {
         }
     }
 
+    #[inline]
     pub fn offsets(&self) -> &'a [u8] {
         &self.offsets[self.first_label..=self.last_label]
     }
 
+    #[inline]
     pub fn data(&self) -> &'a [u8] {
         let first_label_index: usize = usize::from(self.offsets[self.first_label]);
-        &self.data[first_label_index..first_label_index + self.data_length()]
+        &self.data[first_label_index..first_label_index + self.len()]
     }
 
-    pub fn data_length(&self) -> usize {
+    #[inline]
+    pub fn len(&self) -> usize {
         let last_label_len: u8 = self.data[usize::from(self.offsets[self.last_label])] + 1;
         usize::from(self.offsets[self.last_label] - self.offsets[self.first_label] + last_label_len)
     }
 
+    #[inline]
     pub fn first_label(&self) -> usize {
         self.first_label
     }
 
+    #[inline]
     pub fn last_label(&self) -> usize {
         self.last_label
     }
 
-    pub fn equals(&self, other: &LabelSlice, case_sensitive: bool) -> bool {
-        let data = self.data();
-        let other_data = other.data();
-        let len = data.len();
-        let other_len = other_data.len();
-        if len != other_len {
-            return false;
-        }
-        if case_sensitive {
-            return data == other_data;
-        } else {
-            data.eq_ignore_ascii_case(other_data);
-        }
-        true
-    }
-
+    #[inline]
     pub fn label_count(&self) -> usize {
         self.last_label - self.first_label + 1
+    }
+
+    pub fn equals(&self, other: &LabelSlice, case_sensitive: bool) -> bool {
+        if self.len() != other.len() {
+            false
+        } else if case_sensitive {
+            self.data() == other.data()
+        } else {
+            self.data().eq_ignore_ascii_case(other.data())
+        }
     }
 
     pub fn compare(&self, other: &LabelSlice, case_sensitive: bool) -> NameComparisonResult {

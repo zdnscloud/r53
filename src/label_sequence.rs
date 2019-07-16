@@ -1,5 +1,6 @@
 use crate::error::DNSError;
 use crate::name::{self, Name};
+
 #[derive(Debug, Clone)]
 pub struct LabelSequence {
     data: Vec<u8>,
@@ -10,6 +11,7 @@ impl LabelSequence {
     pub fn new(data: Vec<u8>, offsets: Vec<u8>) -> LabelSequence {
         LabelSequence { data, offsets }
     }
+
     pub fn data(&self) -> &[u8] {
         self.data.as_slice()
     }
@@ -23,19 +25,13 @@ impl LabelSequence {
     }
 
     pub fn equals(&self, other: &LabelSequence, case_sensitive: bool) -> bool {
-        let data = self.data();
-        let other_data = other.data();
-        let len = data.len();
-        let other_len = other_data.len();
-        if len != other_len {
-            return false;
-        }
-        if case_sensitive {
-            return data == other_data;
+        if self.len() != other.len() {
+            false
+        } else if case_sensitive {
+            self.data() == other.data()
         } else {
-            data.eq_ignore_ascii_case(&other_data[..]);
+            self.data().eq_ignore_ascii_case(other.data())
         }
-        true
     }
 
     pub fn label_count(&self) -> usize {
@@ -45,13 +41,14 @@ impl LabelSequence {
     pub fn split(
         &mut self,
         start_label: usize,
-        label_count_: usize,
+        label_count: usize,
     ) -> Result<LabelSequence, DNSError> {
         let max_label_count = self.label_count() as usize;
-        if start_label >= max_label_count || label_count_ == 0 {
+        if start_label >= max_label_count || label_count == 0 {
             return Err(DNSError::InvalidLabelIndex.into());
         }
-        let mut label_count = label_count_;
+
+        let mut label_count = label_count;
         if start_label + label_count > max_label_count {
             label_count = max_label_count - start_label;
         }
