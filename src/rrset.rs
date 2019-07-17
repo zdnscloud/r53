@@ -182,7 +182,7 @@ impl FromStr for RRset {
             return Err(DNSError::InvalidRRsetString.into());
         };
 
-        let rdata = RData::from_str(typ, &mut labels)?;
+        let rdata = RData::from_parser(typ, &mut labels)?;
         Ok(RRset {
             name,
             typ,

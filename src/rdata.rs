@@ -116,7 +116,12 @@ impl RData {
         }
     }
 
-    pub fn from_str<'a>(typ: RRType, rdata_str: &mut Parser<'a>) -> Result<Self> {
+    pub fn from_str<'a>(typ: RRType, s: &'a str) -> Result<Self> {
+        let mut labels = Parser::new(s.trim());
+        Self::from_parser(typ, &mut labels)
+    }
+
+    pub fn from_parser<'a>(typ: RRType, rdata_str: &mut Parser<'a>) -> Result<Self> {
         match typ {
             RRType::A => rdata_a::A::from_str(rdata_str).map(RData::A),
             RRType::AAAA => rdata_aaaa::AAAA::from_str(rdata_str).map(RData::AAAA),
