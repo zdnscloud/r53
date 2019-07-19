@@ -61,4 +61,9 @@ pub enum DNSError {
 
     #[fail(display = "rdata field {} with type {} isn't valid: {}", _1, _0, _2)]
     InvalidRdataString(&'static str, &'static str, String),
+
+    #[fail(
+        display = "label seqences in concat_all, the last is absolute and others are not absolute"
+    )]
+    InvalidLabelSequnceConcatParam,
 }
