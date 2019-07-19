@@ -114,7 +114,12 @@ pub fn lower_case(c: usize) -> u8 {
     MAP_TO_LOWER[c]
 }
 
-pub fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Vec<u8>, Vec<u8>)> {
+pub fn string_parse(
+    name_raw: &[u8],
+    start_pos: usize,
+    end: usize,
+    as_absolute: bool,
+) -> Result<(Vec<u8>, Vec<u8>)> {
     let mut start = start_pos;
     let mut data: Vec<u8> = Vec::with_capacity(end - start + 1);
     let mut offsets: Vec<u8> = Vec::new();
@@ -240,8 +245,10 @@ pub fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Ve
         } else {
             assert!(count != 0);
             data[offsets[offsets.len() - 1] as usize] = count as u8;
-            offsets.push(data.len() as u8);
-            data.push(0);
+            if as_absolute {
+                offsets.push(data.len() as u8);
+                data.push(0);
+            }
         }
     }
 
@@ -251,7 +258,7 @@ pub fn string_parse(name_raw: &[u8], start_pos: usize, end: usize) -> Result<(Ve
 impl Name {
     pub fn new(name: &str) -> Result<Name> {
         let name_len = name.len();
-        match string_parse(name.as_bytes(), 0, name_len) {
+        match string_parse(name.as_bytes(), 0, name_len, true) {
             Ok((data, offsets)) => Ok(Name { raw: data, offsets }),
             Err(e) => Err(e),
         }

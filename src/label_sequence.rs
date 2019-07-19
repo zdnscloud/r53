@@ -170,7 +170,7 @@ impl FromStr for LabelSequence {
     type Err = failure::Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         let len = s.len();
-        match string_parse(s.as_bytes(), 0, len) {
+        match string_parse(s.as_bytes(), 0, len, false) {
             Ok((data, offsets)) => Ok(LabelSequence { data, offsets }),
             Err(e) => Err(e),
         }
@@ -254,6 +254,7 @@ mod test {
             www_baidu_.into_label_sequence(www_baidu_first_label, www_baidu_last_label);
         assert_eq!(www_baidu_first_label, 0);
         assert_eq!(www_baidu_last_label, 1);
+        assert_eq!(seq_www_baidu, LabelSequence::from_str("www.baidu").unwrap());
 
         let cn_ = Name::new("cn.").unwrap();
         let sli_cn_ = LabelSlice::from_name(&cn_);
