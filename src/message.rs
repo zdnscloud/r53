@@ -12,7 +12,7 @@ use crate::util::{InputBuffer, OutputBuffer};
 use failure::Result;
 use std::fmt::Write;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum SectionType {
     Answer = 0,
     Auth = 1,
@@ -196,6 +196,14 @@ impl Message {
             .unwrap();
         }
         message_str
+    }
+
+    pub fn section_mut(&mut self, section: SectionType) -> Option<&mut Vec<RRset>> {
+        self.sections[section as usize].0.as_mut()
+    }
+
+    pub fn section(&self, section: SectionType) -> Option<&Vec<RRset>> {
+        self.sections[section as usize].0.as_ref()
     }
 }
 
