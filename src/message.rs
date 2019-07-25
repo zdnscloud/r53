@@ -220,30 +220,26 @@ mod test {
     use std::str::FromStr;
 
     fn build_desired_message() -> Message {
-        let mut msg = Message::with_query(Name::new("test.example.com.").unwrap(), RRType::A);
-        {
-            let mut builder = MessageBuilder::new(&mut msg);
-            builder
-                .id(1200)
-                .opcode(Opcode::Query)
-                .rcode(Rcode::NoError)
-                .set_flag(HeaderFlag::QueryRespone)
-                .set_flag(HeaderFlag::AuthAnswer)
-                .set_flag(HeaderFlag::RecursionDesired)
-                .add_answer(RRset::from_str("test.example.com. 3600 IN A 192.0.2.2").unwrap())
-                .add_answer(RRset::from_str("test.example.com. 3600 IN A 192.0.2.1").unwrap())
-                .add_auth(RRset::from_str("example.com. 3600 IN NS ns1.example.com.").unwrap())
-                .add_additional(RRset::from_str("ns1.example.com. 3600 IN A 2.2.2.2").unwrap())
-                .edns(Edns {
-                    versoin: 0,
-                    extened_rcode: 0,
-                    udp_size: 4096,
-                    dnssec_aware: false,
-                    options: None,
-                })
-                .done();
-        }
-        msg
+        let mut builder = MessageBuilder::new(Name::new("test.example.com.").unwrap(), RRType::A);
+        builder
+            .id(1200)
+            .opcode(Opcode::Query)
+            .rcode(Rcode::NoError)
+            .set_flag(HeaderFlag::QueryRespone)
+            .set_flag(HeaderFlag::AuthAnswer)
+            .set_flag(HeaderFlag::RecursionDesired)
+            .add_answer(RRset::from_str("test.example.com. 3600 IN A 192.0.2.2").unwrap())
+            .add_answer(RRset::from_str("test.example.com. 3600 IN A 192.0.2.1").unwrap())
+            .add_auth(RRset::from_str("example.com. 3600 IN NS ns1.example.com.").unwrap())
+            .add_additional(RRset::from_str("ns1.example.com. 3600 IN A 2.2.2.2").unwrap())
+            .edns(Edns {
+                versoin: 0,
+                extened_rcode: 0,
+                udp_size: 4096,
+                dnssec_aware: false,
+                options: None,
+            });
+        builder.done()
     }
 
     #[test]
