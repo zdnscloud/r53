@@ -1,24 +1,16 @@
 use crate::edns::Edns;
 use crate::header_flag::HeaderFlag;
 use crate::message::{Message, Section, SectionType};
-use crate::name::Name;
 use crate::opcode::Opcode;
 use crate::rcode::Rcode;
-use crate::rr_type::RRType;
 use crate::rrset::RRset;
 
-pub struct MessageBuilder {
-    msg: Message,
+pub struct MessageBuilder<'a> {
+    msg: &'a mut Message,
 }
 
-impl MessageBuilder {
-    pub fn new(name: Name, typ: RRType) -> Self {
-        MessageBuilder {
-            msg: Message::with_query(name, typ),
-        }
-    }
-
-    pub fn with_message(msg: Message) -> Self {
+impl<'a> MessageBuilder<'a> {
+    pub fn new(msg: &'a mut Message) -> Self {
         MessageBuilder { msg }
     }
 
@@ -81,8 +73,7 @@ impl MessageBuilder {
         self
     }
 
-    pub fn done(mut self) -> Message {
+    pub fn done(&mut self) {
         self.msg.recalculate_header();
-        self.msg
     }
 }
