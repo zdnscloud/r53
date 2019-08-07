@@ -53,7 +53,7 @@ impl<'a> MessageBuilder<'a> {
     }
 
     pub fn add_auth(&mut self, rrset: RRset) -> &mut Self {
-        self.add_rrset_to_section(SectionType::Auth, rrset)
+        self.add_rrset_to_section(SectionType::Authority, rrset)
     }
 
     pub fn add_additional(&mut self, rrset: RRset) -> &mut Self {

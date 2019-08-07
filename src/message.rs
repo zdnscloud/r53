@@ -14,7 +14,7 @@ use std::fmt::Write;
 #[derive(Copy, Clone, Debug)]
 pub enum SectionType {
     Answer = 0,
-    Auth = 1,
+    Authority = 1,
     Additional = 2,
 }
 
