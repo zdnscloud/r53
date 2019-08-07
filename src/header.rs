@@ -1,4 +1,4 @@
-use crate::header_flag::{clear_flag, set_flag, setted_flags, HeaderFlag};
+use crate::header_flag::{clear_flag, is_flag_set, set_flag, setted_flags, HeaderFlag};
 use crate::message_render::MessageRender;
 use crate::opcode::Opcode;
 use crate::rcode::Rcode;
@@ -54,6 +54,10 @@ impl Header {
 
     pub fn setted_flags(&self) -> Vec<HeaderFlag> {
         setted_flags(self.flag)
+    }
+
+    pub fn is_flag_set(&self, flag: HeaderFlag) -> bool {
+        is_flag_set(self.flag, flag)
     }
 
     pub fn set_flag(&mut self, flag: HeaderFlag, set: bool) {
@@ -150,6 +154,7 @@ mod test {
         assert_eq!(header.an_count, 2);
         assert_eq!(header.ns_count, 1);
         assert_eq!(header.ar_count, 2);
+        assert!(header.is_flag_set(HeaderFlag::QueryRespone));
 
         let mut render = MessageRender::new();
         header.rend(&mut render);
