@@ -1,5 +1,4 @@
 use crate::edns::Edns;
-use crate::error::DNSError;
 use crate::header::Header;
 use crate::header_flag::HeaderFlag;
 use crate::message_render::MessageRender;
@@ -76,7 +75,7 @@ impl Section {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Message {
     pub header: Header,
-    pub question: Question,
+    pub question: Option<Question>,
     pub sections: [Section; 3],
     pub edns: Option<Edns>,
 }
@@ -87,11 +86,11 @@ impl Message {
         header.set_flag(HeaderFlag::RecursionDesired, true);
         Message {
             header,
-            question: Question {
+            question: Some(Question {
                 name,
                 typ: qtype,
                 class: RRClass::IN,
-            },
+            }),
             sections: [Section(None), Section(None), Section(None)],
             edns: None,
         }
@@ -100,11 +99,12 @@ impl Message {
     pub fn from_wire(raw: &[u8]) -> Result<Self> {
         let buf = &mut InputBuffer::new(raw);
         let header = Header::from_wire(buf)?;
-        if header.qd_count != 1 {
-            return Err(DNSError::ShortOfQuestion.into());
-        }
+        let question = if header.qd_count == 1 {
+            Some(Question::from_wire(buf)?)
+        } else {
+            None
+        };
 
-        let question = Question::from_wire(buf)?;
         let answer = Section::from_wire(buf, header.an_count)?;
         let auth = Section::from_wire(buf, header.ns_count)?;
         let mut additional = Section::from_wire(buf, header.ar_count)?;
@@ -135,7 +135,7 @@ impl Message {
 
     pub fn rend(&self, render: &mut MessageRender) {
         self.header.rend(render);
-        self.question.rend(render);
+        self.question.as_ref().map(|q| q.rend(render));
         self.sections
             .iter()
             .for_each(|section| section.rend(render));
@@ -146,7 +146,7 @@ impl Message {
 
     pub fn to_wire(&self, buf: &mut OutputBuffer) {
         self.header.to_wire(buf);
-        self.question.to_wire(buf);
+        self.question.as_ref().map(|q| q.to_wire(buf));
         self.sections
             .iter()
             .for_each(|section| section.to_wire(buf));
@@ -165,7 +165,9 @@ impl Message {
         write!(
             message_str,
             ";; QUESTION SECTION:\n{}\n",
-            self.question.to_string()
+            self.question
+                .as_ref()
+                .map_or("".to_string(), |q| q.to_string()),
         )
         .unwrap();
 
