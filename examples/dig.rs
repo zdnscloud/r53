@@ -5,7 +5,7 @@ extern crate clap;
 extern crate r53;
 
 use clap::{App, Arg};
-use r53::{Message, MessageRender, Name, RRType};
+use r53::{edns::Edns, util::hex::to_hex, Message, MessageBuilder, MessageRender, Name, RRType};
 
 fn main() {
     let matches = App::new("dig")
@@ -67,14 +67,24 @@ fn main() {
     };
     let qtype = RRType::from_str(qtype.as_ref()).expect("unknown qtype");
 
-    let query = Message::with_query(name, qtype);
+    let mut query = Message::with_query(name, qtype);
+    let mut builder = MessageBuilder::new(&mut query);
+    builder.edns(Edns {
+        versoin: 0,
+        extened_rcode: 0,
+        udp_size: 4096,
+        dnssec_aware: false,
+        options: None,
+    });
+    builder.done();
     let mut render = MessageRender::new();
     query.rend(&mut render);
     socket.send_to(render.data(), server_addr).unwrap();
 
-    let mut buf = [0; 512];
+    let mut buf = [0; 1024];
     match socket.recv_from(&mut buf) {
         Ok((len, _)) if len > 0 => {
+            println!("{}", to_hex(&buf[0..len]));
             let response = Message::from_wire(&buf).unwrap();
             println!("get response: {}", response.to_string());
         }

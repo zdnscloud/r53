@@ -207,6 +207,10 @@ impl Message {
     pub fn section(&self, section: SectionType) -> Option<&Vec<RRset>> {
         self.sections[section as usize].0.as_ref()
     }
+
+    pub fn take_section(&mut self, section: SectionType) -> Option<Vec<RRset>> {
+        self.sections[section as usize].0.take()
+    }
 }
 
 #[cfg(test)]
