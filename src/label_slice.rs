@@ -206,7 +206,7 @@ impl<'a> fmt::Display for LabelSlice<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::name::Name;
+    use crate::name::{root, Name};
     #[test]
     fn test_label_slice_new() {
         //0377777705626169647503636f6d00
@@ -305,5 +305,15 @@ mod test {
             ls_slice2.compare(&ls_slice3, false).relation,
             NameRelation::Equal
         );
+    }
+
+    #[test]
+    fn test_label_slice_root() {
+        let n1 = Name::new(".").unwrap();
+        let ls1 = LabelSlice::from_name(&n1);
+        assert_eq!(ls1.len(), 1);
+
+        let ls2 = LabelSlice::from_name(&n1);
+        assert_eq!(ls2.len(), 1);
     }
 }

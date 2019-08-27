@@ -9,6 +9,7 @@ use crate::rr_type::RRType;
 use crate::rrset::RRset;
 use crate::util::{InputBuffer, OutputBuffer};
 use failure::Result;
+use rand;
 use std::fmt::Write;
 
 #[derive(Copy, Clone, Debug)]
@@ -84,6 +85,7 @@ impl Message {
     pub fn with_query(name: Name, qtype: RRType) -> Self {
         let mut header: Header = Default::default();
         header.set_flag(HeaderFlag::RecursionDesired, true);
+        header.id = rand::random::<u16>();
         Message {
             header,
             question: Some(Question {
